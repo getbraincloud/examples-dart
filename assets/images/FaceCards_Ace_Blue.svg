@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   width="64px"
+   height="64px"
+   viewBox="0 0 64 64"
+   version="1.1"
+   id="svg1"
+   sodipodi:docname="FaceCards_Ace_Blue.svg"
+   inkscape:version="1.3.2 (091e20e, 2023-11-25, custom)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs1" />
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:zoom="12.703125"
+     inkscape:cx="32"
+     inkscape:cy="32"
+     inkscape:window-width="1920"
+     inkscape:window-height="1009"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg1" />
+  <title
+     id="title1">Demo_Games/AceyDeucy/v3/FaceCards_Ace_Blue</title>
+  <g
+     id="Demo_Games/AceyDeucy/v3/FaceCards_Ace_Blue"
+     stroke="none"
+     stroke-width="1"
+     fill="none"
+     fill-rule="evenodd">
+    <path
+       d="M36.9803066,15 C37.0108333,15.0219931 37.0384329,15.0511762 37.072305,15.0647104 C37.9032187,15.3920692 38.2009593,15.9575454 37.9768175,16.815276 C37.0438692,20.3832323 36.1071572,23.9499198 35.1716998,27.5170302 C34.8852499,28.6099177 34.5967092,29.7019593 34.3110957,30.7948468 C34.2851688,30.8929698 34.2751326,30.9953223 34.2475331,31.156887 L34.7213253,31.156887 C38.3117757,31.156887 41.902226,31.1636541 45.4930945,31.1501198 C46.1065572,31.1475822 46.5811858,31.330717 46.8550904,31.9008456 C47.1356858,32.4853543 46.9889064,32.9916184 46.5857857,33.4809647 C40.829189,40.4701157 35.0801195,47.4656108 29.3277045,54.4585683 C28.8656212,55.020661 28.2943942,55.1450066 27.6775861,54.8320279 C27.0858685,54.5317376 26.8299454,53.9472289 27.0097606,53.2595218 C28.2262316,48.5982551 29.4468844,43.9378342 30.6654463,39.2774134 C30.6976457,39.1547596 30.7218999,39.0299911 30.7645537,38.8409351 C30.5742841,38.8409351 30.4262502,38.8409351 30.2786344,38.8409351 C26.6881841,38.8409351 23.0977338,38.833745 19.5068653,38.8472792 C18.8934026,38.8498169 18.4196103,38.6645674 18.1448694,38.0952847 C17.8630194,37.510353 18.0131443,37.0062036 18.4162649,36.5168573 C24.1812251,29.5175557 29.9369855,22.510641 35.7036184,15.5130312 C35.8767428,15.302828 36.1406112,15.1691776 36.3622439,15 L36.9803066,15 Z"
+       id="bolt-shape"
+       fill="#186FB5"
+       fill-rule="nonzero" />
+    <g
+       id="A"
+       transform="translate(0.7893, 0.6694)"
+       fill="#186FB5"
+       fill-rule="nonzero">
+      <path
+         d="M6.2421875,0 L9.39648438,11.3305664 L6.09277344,11.3305664 L5.42041016,8.87353516 L2.00878906,8.87353516 L1.28662109,11.3305664 L0,11.3305664 L3.35351563,0 L6.2421875,0 Z M2.33251953,7.73632812 L5.11328125,7.73632812 L3.77685547,2.71435547 L2.33251953,7.73632812 Z"
+         id="Shape" />
+    </g>
+  </g>
+</svg>
