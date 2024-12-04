@@ -76,10 +76,10 @@ class _MyAppState extends State<MyApp> {
         updateTick: 50);
 
     /// Check if there was a session
-    bool hadSession = _bcWrapper.getStoredSessionId().isNotEmpty;
+    bool hadSession = _bcWrapper.canReconnect();
 
     if (hadSession) {
-      _bcWrapper.restoreSession();
+      _bcWrapper.reconnect();
     }
 
     ///return the route name base on existing session
@@ -135,7 +135,7 @@ class HomePage extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.all(12),
                 child: ElevatedButton(
-                    onPressed: () => _bcWrapper.getStoredPacketId(),
+                    onPressed: null,
                     child: Text("Test")),
               ),
             ],
@@ -222,15 +222,8 @@ class _SignInPageState extends State<SignInPage> {
         userId = response.data?["id"];
       } else {
         if (response.reasonCode == ReasonCodes.invalidPacketId) {
-          String message = response.statusMessage ?? "";
-          String pattern = "[Last received packet ID: ";
-          String space = " ";
-          int index = message.indexOf(pattern) + pattern.length;
-          int endIndex = message.indexOf(space, index);
-          int packetId = int.parse(message.substring(index, endIndex));
-          await _bcWrapper.setStoredPacketId(packetId++);
+          // Should just retry sending the message. 
         }
-
         if (context.mounted) {
           debugPrint("Error: $response");
           ScaffoldMessenger.of(context).showSnackBar(
