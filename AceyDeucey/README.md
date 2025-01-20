@@ -1,16 +1,38 @@
-# sample_app
+# Acey Deucey
 
-A new Flutter project.
+Acey Deucey is a casino-style game in which players bet on whether a drawn card will be between two others. In general, the greater the gap between the two cards, the higher a bet should be.
+
+There are three outcomes when the third card is flipped:
+
+- The card is between the other two. Win 1.5x bet.
+- The card is outside the other two. Win 0.5x bet.
+- The card matches one of the other two. Lose bet.
+
+Unless the third card is between the other two (option 1) a portion of the money that is lost will contribute to the jackpot.
+
+
+Acey Deucey demostrate usage of the Dart braincloud client sdk.
 
 ## Getting Started
 
-This project is a starting point for a Flutter application.
 
-A few resources to get you started if this is your first Flutter project:
+Get the dependencies
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+```shell
+flutter pub get
+```
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+Create a bc_config.json file for your app 
+```json
+{
+    "secretKey":"<app secret from brainCloud portal>",
+    "appId": "<app id from brainCloud portal>",
+    "version": "1.0.0"
+}
+```
+
+Run the app
+```shell
+flutter run --dart-define-from-file=bc_config.json
+```
+

@@ -62,10 +62,10 @@ class _MyAppState extends State<MyApp> {
     }
 
     const url = String.fromEnvironment('url');
-    if (url.isEmpty) {
-      throw AssertionError(
-          'url is not set. Create a bc_config.json and run with --dart-define-from-file=bc_config.json');
-    }
+    // if (url.isEmpty) {
+    //   throw AssertionError(
+    //       'url is not set. Create a bc_config.json and run with --dart-define-from-file=bc_config.json');
+    // }
 
     channelId = "$appId:gl:jackpot";
 
@@ -73,7 +73,7 @@ class _MyAppState extends State<MyApp> {
         secretKey: secretKey,
         appId: appId,
         version: version,
-        url: url,
+        url: url.isNotEmpty ? url :null,
         updateTick: 50);
 
     /// Check if there was a session
