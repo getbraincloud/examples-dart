@@ -418,7 +418,7 @@ class MyGame extends FlameGame with TapDetector {
     if (card3.value > card1.value && card3.value < card2.value) {
       debugPrint("WIN - In between the cards");
 
-      int winAmount = (bet * 2).toInt();
+      int winAmount = (bet * 1.5).toInt();
 
       gameStatusMsg.textRenderer = winTextStyle;
       gameStatusMsg.text = "You won: \$$winAmount";
@@ -433,7 +433,7 @@ class MyGame extends FlameGame with TapDetector {
       awardCurrency((winAmount) - bet);
 
       updateCurrentWinStreak();
-    } else {
+    } else if (card3.value == card1.value || card3.value == card2.value) {
       debugPrint("LOSS - Same as high or low card");
 
       gameStatusMsg.textRenderer = regularTextStyle;
@@ -450,6 +450,23 @@ class MyGame extends FlameGame with TapDetector {
 
       // Reset win streak and update global stats (track average streak achieved by user)
       resetStreak();
+    } else {
+      debugPrint("WIN - Outside the cards");
+       int winAmount = (bet * 0.5).toInt();
+
+      gameStatusMsg.textRenderer = winTextStyle;
+      gameStatusMsg.text = "You Won: \$$winAmount";
+
+      gamesWon++;
+      dollarsWon += winAmount;
+      incrementData["Wins"] = 1;
+      incrementData["DollarsWon"] = winAmount;
+
+      gameResults.add(false);
+
+      consumeCurrency(winAmount);
+
+      updateCurrentWinStreak();
     }
 
     _bcWrapper.globalStatisticsService
