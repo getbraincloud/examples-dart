@@ -1,7 +1,8 @@
 import 'dart:async';
 import 'dart:math';
 
-import 'package:braincloud_dart/braincloud_dart.dart';
+import 'package:braincloud/braincloud.dart';
+import 'package:braincloud_data_persistence/braincloud_data_persistence.dart';
 import 'package:flame/components.dart';
 import 'package:flame/game.dart';
 import 'package:flame/input.dart';
@@ -10,7 +11,7 @@ import 'package:flutter/material.dart';
 import 'package:sample_app/game_button.dart';
 import 'card_component.dart';
 
-final _bcWrapper = BrainCloudWrapper(wrapperName: "flutter_sample_app");
+final _bcWrapper = BrainCloudWrapper(wrapperName: "flutter_sample_app",persistence: DataPersistence() );
 
 String channelId = "";
 
@@ -382,7 +383,7 @@ class MyGame extends FlameGame with TapDetector {
 
   newHand() async {
     mainButton.toggled = false;
-    currentCards = deck;
+    currentCards = List.from(deck);
 
     PlayingCard t1;
     PlayingCard t2;
@@ -432,7 +433,7 @@ class MyGame extends FlameGame with TapDetector {
       awardCurrency((winAmount) - bet);
 
       updateCurrentWinStreak();
-    } else if (card3.value == card1.value || card3.value == card2.value) {
+    } else {
       debugPrint("LOSS - Same as high or low card");
 
       gameStatusMsg.textRenderer = regularTextStyle;
@@ -449,38 +450,22 @@ class MyGame extends FlameGame with TapDetector {
 
       // Reset win streak and update global stats (track average streak achieved by user)
       resetStreak();
-    } else {
-      debugPrint("WIN - Outside the cards");
-      var winAmount = bet;
-
-      gameStatusMsg.textRenderer = winTextStyle;
-      gameStatusMsg.text = "You won: \$$winAmount";
-
-      gamesWon++;
-      dollarsWon += winAmount;
-      incrementData["Wins"] = 1;
-      incrementData["DollarsWon"] = winAmount;
-
-      gameResults.add(false);
-
-      consumeCurrency(winAmount);
-
-      updateCurrentWinStreak();
     }
 
     _bcWrapper.globalStatisticsService
-        .incrementGlobalStats(jsonData: {"GamesPlayed": 1});
+        .incrementGlobalStats(statistics: {"GamesPlayed": 1});
 
-    _bcWrapper.playerStatisticsService.incrementUserStats(stats: incrementData);
+    _bcWrapper.playerStatisticsService.incrementUserStats(statistics: incrementData);
 
     _bcWrapper.socialLeaderboardService.postScoreToLeaderboard(
         leaderboardId: "AceyDeucyPlayers",
         score: dollarsWon,
-        jsonData: {"DollarsWon": dollarsWon, "Refills": refills});
+        data: {"DollarsWon": dollarsWon, "Refills": refills});
   }
 
-  PlayingCard randomCard() {
+  PlayingCard randomCard() {    
     var rnd = Random();
+    if (currentCards.isEmpty) throw ("Card Deck is empty"); 
     int position = rnd.nextInt(currentCards.length);
 
     var card = currentCards.removeAt(position);
@@ -491,7 +476,7 @@ class MyGame extends FlameGame with TapDetector {
     var statistics = {"Jackpot": amount};
 
     ServerResponse response = await _bcWrapper.globalStatisticsService
-        .incrementGlobalStats(jsonData: statistics);
+        .incrementGlobalStats(statistics: statistics);
 
     if (response.statusCode == StatusCodes.ok) {
       var newJackpotAmount = response.data?["statistics"]["Jackpot"];
@@ -509,7 +494,7 @@ class MyGame extends FlameGame with TapDetector {
         var statistics = {"TotalHouseWinnings": -1 * defaultResetValue};
 
         await _bcWrapper.globalStatisticsService
-            .incrementGlobalStats(jsonData: statistics);
+            .incrementGlobalStats(statistics: statistics);
 
         // Send updated Jackpot amount through Chat Channel
         var content = {"jackpotAmount": newJackpotAmount};
@@ -519,7 +504,7 @@ class MyGame extends FlameGame with TapDetector {
         await _bcWrapper.chatService.postChatMessage(
             channelId: channelId,
             contentJson: content,
-            inRecordInHistory: recordInHistory);
+            recordInHistory: recordInHistory);
       }
     }
   }
@@ -534,7 +519,7 @@ class MyGame extends FlameGame with TapDetector {
     Map<String, dynamic> statistics = {streakStat: 1};
 
     ServerResponse response = await _bcWrapper.globalStatisticsService
-        .incrementGlobalStats(jsonData: statistics);
+        .incrementGlobalStats(statistics: statistics);
 
     var status = response.statusCode;
     debugPrint("$status  : $response");
@@ -550,7 +535,7 @@ class MyGame extends FlameGame with TapDetector {
     var scriptData = {"vcAmount": vcAmount};
 
     await _bcWrapper.scriptService
-        .runScript(scriptName: scriptName, jsonScriptData: scriptData);
+        .runScript(scriptName: scriptName, scriptData: scriptData);
 
     updateUserBalance();
 
@@ -567,14 +552,14 @@ class MyGame extends FlameGame with TapDetector {
     };
 
     await _bcWrapper.globalStatisticsService
-        .incrementGlobalStats(jsonData: statistics);
+        .incrementGlobalStats(statistics: statistics);
   }
 
   void updateUserBalance() async {
     var vcId = "bucks";
 
     ServerResponse response =
-        await _bcWrapper.virtualCurrencyService.getCurrency(currencyType: vcId);
+        await _bcWrapper.virtualCurrencyService.getCurrency(vcId: vcId);
 
     if (response.statusCode == StatusCodes.ok) {
       var newBalance = response.data?["currencyMap"]["bucks"]["balance"];
