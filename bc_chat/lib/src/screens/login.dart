@@ -27,7 +27,7 @@ class _LoginScreenState extends State<LoginScreen> {
     if (loading) {
       rememberMe = (await prefs.getBool(kRememberMe)) ?? false;
       if (rememberMe) {
-        _attemptReconnect();
+        _attemptReconnect();        
       } else {
         setState(() {
           loading = false;
@@ -47,11 +47,10 @@ class _LoginScreenState extends State<LoginScreen> {
             context,
             ChannelListView.routeName,
           );
-        } else {
-          setState(() {
-            loading = false;
-          });
         }
+        setState(() {
+          loading = false;
+        });
       });
     } else {
       setState(() {
