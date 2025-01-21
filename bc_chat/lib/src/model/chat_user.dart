@@ -8,7 +8,7 @@ class ChatUser {
   ChatUser({required this.id, required this.name, required this.pic});
 
   factory ChatUser.fromMap(Map<String,dynamic> map) {
-    return ChatUser(id: map['id'], name: map['name'], pic: map['pic']);
+    return ChatUser(id: map['id'], name: map['name'], pic: map['pic'] ?? "");
   }
   Map<String,dynamic> toMap() {
     return {"id": id, "name": name, "pic": pic};

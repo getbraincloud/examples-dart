@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:bc_chat/src/model/channel.dart';
 import 'package:bc_chat/src/model/message.dart';
-import 'package:braincloud_dart/braincloud_dart.dart';
+import 'package:braincloud/braincloud.dart';
 import 'package:flutter/material.dart';
 
 /// Displays detailed information about a SampleItem.
@@ -91,7 +91,7 @@ class _ChatViewState extends State<ChatView> with WidgetsBindingObserver {
   }
   void _fetchData() async {
     if (!mounted) return;
-    widget.bcWrapper.chatService.getRecentChatMessages(channelId: widget.channel.id, maxToReturn: 50).then((response) {
+    widget.bcWrapper.chatService.getRecentChatMessages(channelId: widget.channel.id, maxReturn: 50).then((response) {
       if (response.statusCode == 200 && response.data != null) {
         if (!mounted) return;
         debugPrint(" We did get messages $response  ${response.data}");
@@ -140,7 +140,7 @@ class _ChatViewState extends State<ChatView> with WidgetsBindingObserver {
         msg = "${msg.replaceFirst("/me", "_[no history] ")}_";
         saveHistory = false;
       }
-      widget.bcWrapper.chatService.postChatMessageSimple(channelId: widget.channel.id, plain: msg, recordInHistory: saveHistory).then((response) {
+      widget.bcWrapper.chatService.postChatMessageSimple(channelId: widget.channel.id, chatMessage: msg, recordInHistory: saveHistory).then((response) {
         if (response.statusCode == 200) {
           _chatController.clear();
         }

@@ -14,10 +14,8 @@ dependencies:
     sdk: flutter
   flutter_localizations:
     sdk: flutter
-  braincloud_dart: 
-    git: 
-      url: https://github.com/getbraincloud/braincloud-dart.git
-      ref: develop
+  braincloud: ^5.5.0 
+  braincloud_data_persistence: ^5.5.0
   shared_preferences: ^2.3.3
             
 dev_dependencies:

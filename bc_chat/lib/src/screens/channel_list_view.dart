@@ -1,5 +1,5 @@
 import 'package:bc_chat/src/model/channel.dart';
-import 'package:braincloud_dart/braincloud_dart.dart';
+import 'package:braincloud/braincloud.dart';
 import 'package:flutter/material.dart';
 
 import '../settings/settings_view.dart';
@@ -28,7 +28,7 @@ class _ChannelListViewState extends State<ChannelListView> {
   List<Channel>? channels;
 
   void loadChannels() async {
-    ServerResponse response = await widget.bcWrapper.chatService.getSubscribedChannels(channeltype: 'gl');
+    ServerResponse response = await widget.bcWrapper.chatService.getSubscribedChannels(channelType: 'gl' );
     if (response.statusCode == 200 && response.data != null) {
       // debugPrint('Channels are ${response.data}');
       List<dynamic> chnls = response.data?['channels'];

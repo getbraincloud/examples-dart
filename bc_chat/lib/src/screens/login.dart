@@ -1,5 +1,5 @@
 import 'package:bc_chat/src/screens/channel_list_view.dart';
-import 'package:braincloud_dart/braincloud_dart.dart';
+import 'package:braincloud/braincloud.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -39,6 +39,7 @@ class _LoginScreenState extends State<LoginScreen> {
   void _attemptReconnect() {
     debugPrint("Reconnecting...");
     if (widget.bcWrapper.canReconnect()) {
+      debugPrint("Attempting Reconnection for profileId ${widget.bcWrapper.getStoredProfileId()} anonID: ${widget.bcWrapper.getStoredAnonymousId()}");
       widget.bcWrapper.reconnect().then((response) {
         debugPrint("Reconnected response: $response");
         if (response.statusCode == 200 && mounted) {
