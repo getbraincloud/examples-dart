@@ -1,29 +1,45 @@
 # bc_chat
 
-A new Flutter project.
+bc_chat is a Flutter-based example application demonstrating the integration of brainCloud’s chat features. This sample app showcases how to implement real-time chat functionalities using the brainCloud backend services.
+
+## Features
+
+* User Authentication: Authenticate users securely with brainCloud.
+* Real-time Messaging: Send and receive messages instantly.
+* Chat Channels: Support for multiple chat channels.
+* Message History: Retrieve and display past messages.
+* Support long running sessions ("_Remember me_")
+
+## Prerequisites
+
+Before running the application, ensure you have the following installed:
+* Dart SDK
+* Flutter SDK
+* Enable Chat in brainCloud portal (Design->Messaging->Chat)
 
 ## Getting Started
 
-This project is a starting point for a Flutter application that follows the
-[simple app state management
-tutorial](https://flutter.dev/to/state-management-sample).
+1.	Clone the Repository:
+```shell
+git clone https://github.com/getbraincloud/examples-dart.git
+```
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+2.	Navigate to the bc_chat Directory:
+```shell
+cd examples-dart/bc_chat
+```
 
-## Assets
+3.	Install Dependencies:
+```shell
+flutter pub get
+```
 
-The `assets` directory houses images, fonts, and any other files you want to
-include with your application.
+4.	Configure brainCloud:
+* Obtain your brainCloud app credentials from the brainCloud portal.
+* Update the launch parameters MY_APPID and MY_SECRET with your App Id and App Secret.
+	
+5.	Run the Application:
+```shell
+flutter run  --dart-define=APPID=MY_APPID --dart-define=APPSECRET=MY_SECRET
+```
 
-The `assets/images` directory contains [resolution-aware
-images](https://flutter.dev/to/resolution-aware-images).
-
-## Localization
-
-This project generates localized messages based on arb files found in
-the `lib/src/localization` directory.
-
-To support additional languages, please visit the tutorial on
-[Internationalizing Flutter apps](https://flutter.dev/to/internationalization).
