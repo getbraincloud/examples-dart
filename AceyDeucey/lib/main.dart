@@ -247,7 +247,7 @@ class MyGame extends FlameGame with TapDetector {
   CardComponent card2 = CardComponent();
   CardComponent card3 = CardComponent();
 
-  TextComponent gameStatusMsg = TextComponent(position: Vector2(250, 160));
+  TextComponent gameStatusMsg = TextComponent(position: Vector2(400, 185),anchor: Anchor.center);
 
   TextComponent moneyText = TextComponent(position: Vector2(50, 65));
   TextComponent betText = TextComponent(position: Vector2(400, 510),anchor: Anchor.center);
