@@ -33,10 +33,11 @@ class CardComponent extends RectangleComponent {
 
   int value = 0;
   String suit = "";
+  double origX = 0.0;
 
   bool isFlipping = false; // Prevents multiple flips at the same time.
   double flipProgress = 1.0; // 1.0 (visible) -> 0.0 (flat) -> -1.0 (flipped).
-  final double flipDuration = 0.3; // Duration of the flip animation.
+  final double flipDuration = 0.20; // Duration of the flip animation.
 
   @override
   Async.FutureOr<void> onLoad() async {
@@ -97,7 +98,7 @@ class CardComponent extends RectangleComponent {
   /// Flip function to visually flip the card.
   void flipCard() {
     if (isFlipping) return; // Prevent overlapping animations.
-
+    origX = x;
     isFlipping = true;
     Async.Timer.periodic(const Duration(milliseconds: 16), (timer) {
       final delta = 16 / (flipDuration * 1000);
@@ -125,9 +126,19 @@ class CardComponent extends RectangleComponent {
 
       // Update the component's visual scale.
       scale.x = flipProgress.abs();
+      if (!isFlipping) {
+        x = origX;
+      } else {
+        // var xd1 = 
+        var xd = (width / 10) * (1 - ((flipProgress.abs() * 10.0).roundToDouble()) / 10.0);
+        if (flipProgress > 0) {
+          x += xd;
+        } else {
+          x -= xd;
+        }
+      }
     });
   }
-
 }
 
 enum CardState { faceDown, faceUp }
