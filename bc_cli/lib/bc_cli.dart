@@ -1,8 +1,9 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:bc_cli/file_persistence.dart';
 import 'package:braincloud/braincloud.dart';
-// import 'package:braincloud/memory_persistence.dart';
 
 class Params {
   String appSecret = "";
@@ -47,7 +48,9 @@ Params parseArgs(List<String> args) {
 }
 
 void queryBraincloud(List<String> args) async {
-  final bcWrapper = BrainCloudWrapper(wrapperName: "FlutterTest");
+  final bcWrapper = BrainCloudWrapper(wrapperName: "FlutterTest",persistence: FilePersistence());
+
+  //  await Future.delayed(Duration(seconds: 3));
 
   Params params = parseArgs(args);
 
@@ -87,9 +90,21 @@ void queryBraincloud(List<String> args) async {
       exit(1);
     }
 
-  }
+  } else if (bcWrapper.canReconnect()) {
+    /// Login anonymously
+    response = await bcWrapper.authenticateAnonymous();
+    if (response.statusCode == 200) {
+      String prettyJson = JsonEncoder.withIndent('  ').convert(response.data?['statistics']);
+      print(" -- used authenticateAnonymous to re-authentincation as -- ");
+      print("user      : ${response.data?['emailAddress']}");
 
-  print("");
+      print("User statistics $prettyJson");
+    } else {
+      print("User does not exits or could not be authenticated.");
+      exit(1);
+    }
+
+  }
   /// We are down so stop the built-in run-loop to allow the app to terminate.
   bcWrapper.stopTimer();
 
