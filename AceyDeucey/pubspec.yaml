@@ -31,8 +31,8 @@ dependencies:
   flutter:
     sdk: flutter
 
-  braincloud: ^5.5.0
-  braincloud_data_persistence: ^5.5.0
+  braincloud: ^5.8.0
+  braincloud_data_persistence: ^5.8.0
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.

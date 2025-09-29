@@ -1,4 +1,4 @@
-import 'dart:async';
+import 'dart:async' as Async;
 import 'dart:math';
 
 import 'package:braincloud/braincloud.dart';
@@ -247,9 +247,10 @@ class MyGame extends FlameGame with TapDetector {
   CardComponent card2 = CardComponent();
   CardComponent card3 = CardComponent();
 
-  TextComponent gameStatusMsg = TextComponent(position: Vector2(150, 150));
+  TextComponent gameStatusMsg = TextComponent(position: Vector2(400, 185),anchor: Anchor.center);
 
   TextComponent moneyText = TextComponent(position: Vector2(50, 65));
+  TextComponent betText = TextComponent(position: Vector2(400, 510),anchor: Anchor.center);
 
   GameButton mainButton = GameButton(
       iconPath: "images/Icon_Deck.svg", toggleIconPath: "images/Icon_Next.svg");
@@ -291,6 +292,9 @@ class MyGame extends FlameGame with TapDetector {
 
   final double padding = 12;
 
+  final int cardFlipDurationMs = 300;
+  final int resultMessageDelayms = 600;
+
   final regularTextStyle = TextPaint(
     style: TextStyle(fontSize: 48.0, color: BasicPalette.white.color),
   );
@@ -305,7 +309,7 @@ class MyGame extends FlameGame with TapDetector {
   Color backgroundColor() => Color(0xFF333333);
 
   @override
-  FutureOr<void> onLoad() async {
+  Async.FutureOr<void> onLoad() async {
     for (String suit in suits) {
       for (int card in cards) {
         deck.add(PlayingCard(value: card, suit: suit));
@@ -366,6 +370,9 @@ class MyGame extends FlameGame with TapDetector {
 
     updateUserBalance();
 
+    betText.text = "Bet \$$bet";
+    add(betText);
+
     moneyText.text = "Balance: \$$money";
     add(moneyText);
 
@@ -396,10 +403,16 @@ class MyGame extends FlameGame with TapDetector {
     var values = [t1, t2];
     values.sort((a, b) => a.value.compareTo(b.value));
 
+    card1.cardValue(PlayingCard(value: 0, suit: ""));
     card1.cardValue(values[0]);
-    card2.cardValue(values[1]);
+    Async.Timer(Duration(milliseconds: cardFlipDurationMs), () {
+      card2.cardValue(PlayingCard(value: 0, suit: ""));
+      card2.cardValue(values[1]);
+    });
+    // card1.flipCard();
+    // card2.flipCard();
     card3.cardValue(PlayingCard(value: 0, suit: ""));
-
+    betText.text = "Bet \$$bet";
     gameStatusMsg.text = "";
   }
 
@@ -421,7 +434,9 @@ class MyGame extends FlameGame with TapDetector {
       int winAmount = (bet * 1.5).toInt();
 
       gameStatusMsg.textRenderer = winTextStyle;
-      gameStatusMsg.text = "You won: \$$winAmount";
+      Async.Timer(Duration(milliseconds: resultMessageDelayms), (){
+        gameStatusMsg.text = "You won: \$$winAmount";
+      });
 
       gamesWon++;
       dollarsWon += winAmount;
@@ -437,7 +452,9 @@ class MyGame extends FlameGame with TapDetector {
       debugPrint("LOSS - Same as high or low card");
 
       gameStatusMsg.textRenderer = regularTextStyle;
-      gameStatusMsg.text = "You Lost!";
+      Async.Timer(Duration(milliseconds: resultMessageDelayms), (){
+        gameStatusMsg.text = "You Lost!";
+      });
 
       gamesLost++;
 
@@ -455,8 +472,10 @@ class MyGame extends FlameGame with TapDetector {
        int winAmount = (bet * 0.5).toInt();
 
       gameStatusMsg.textRenderer = winTextStyle;
-      gameStatusMsg.text = "You Won: \$$winAmount";
-
+      Async.Timer(Duration(milliseconds: resultMessageDelayms), (){
+        gameStatusMsg.text = "You Won: \$$winAmount";
+      });
+    
       gamesWon++;
       dollarsWon += winAmount;
       incrementData["Wins"] = 1;
@@ -544,7 +563,17 @@ class MyGame extends FlameGame with TapDetector {
     currentWinStreak = 0;
   }
 
-  void awardCurrency(int amountToAward) {}
+  void awardCurrency(int amountToAward) async {
+
+    var scriptName = "AwardCurrency";
+    var vcAmount = amountToAward;
+    var scriptData = {"vcAmount": vcAmount};
+    await _bcWrapper.scriptService
+        .runScript(scriptName: scriptName, scriptData: scriptData);
+
+    updateUserBalance();
+
+  }
 
   void consumeCurrency(amountToConsume) async {
     var scriptName = "ConsumeCurrency";
@@ -578,11 +607,13 @@ class MyGame extends FlameGame with TapDetector {
     ServerResponse response =
         await _bcWrapper.virtualCurrencyService.getCurrency(vcId: vcId);
 
+      debugPrint(" :Player currency is :${response.data}");
     if (response.statusCode == StatusCodes.ok) {
       var newBalance = response.data?["currencyMap"]["bucks"]["balance"];
 
       money = newBalance;
       moneyText.text = "Balance: \$$money";
+      debugPrint("Updated balance is now :${moneyText.text}");
     } else {
       handleError(response);
     }

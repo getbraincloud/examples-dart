@@ -1,8 +1,9 @@
-import 'dart:async';
+import 'dart:async' as Async;
 
 import 'package:flame/components.dart';
 import 'package:flame_svg/flame_svg.dart';
 import 'package:flutter/material.dart';
+
 import 'main.dart';
 
 class CardComponent extends RectangleComponent {
@@ -32,9 +33,14 @@ class CardComponent extends RectangleComponent {
 
   int value = 0;
   String suit = "";
+  double origX = 0.0;
+
+  bool isFlipping = false; // Prevents multiple flips at the same time.
+  double flipProgress = 1.0; // 1.0 (visible) -> 0.0 (flat) -> -1.0 (flipped).
+  final double flipDuration = 0.20; // Duration of the flip animation.
 
   @override
-  FutureOr<void> onLoad() async {
+  Async.FutureOr<void> onLoad() async {
     size = Vector2(160, 170);
 
     setColor(Colors.transparent);
@@ -74,9 +80,10 @@ class CardComponent extends RectangleComponent {
     suit = playingCard.suit;
 
     if (value > 0) {
-      cardBack.current = CardState.faceUp;
-      svg = "images/${cardImages[value]}";
-      cardBG.svg = cardBGSvgUp;
+      // cardBack.current = CardState.faceUp;
+      // svg = "images/${cardImages[value]}";
+      // cardBG.svg = cardBGSvgUp;
+      flipCard();
     } else {
       cardFace.svg = null;
       cardBack.current = CardState.faceDown;
@@ -86,6 +93,51 @@ class CardComponent extends RectangleComponent {
 
   set svg(String svgPath) {
     Svg.load(svgPath).then((svg) => cardFace.svg = svg);
+  }
+
+  /// Flip function to visually flip the card.
+  void flipCard() {
+    if (isFlipping) return; // Prevent overlapping animations.
+    origX = x;
+    isFlipping = true;
+    Async.Timer.periodic(const Duration(milliseconds: 16), (timer) {
+      final delta = 16 / (flipDuration * 1000);
+      flipProgress -= delta;
+
+      // At halfway point, swap the card state.
+      if (flipProgress <= 0 && flipProgress > -delta) {
+        if (cardBack.current == CardState.faceDown) {
+          cardBack.current = CardState.faceUp;
+          svg = "images/${cardImages[value]}";
+          cardBG.svg = cardBGSvgUp;
+        } else {
+          cardBack.current = CardState.faceDown;
+          cardFace.svg = null;
+          cardBG.svg = cardBGSvgDown;
+        }
+      }
+
+      // Reset animation and mark as done.
+      if (flipProgress <= -1.0) {
+        flipProgress = 1.0;
+        isFlipping = false;
+        timer.cancel();
+      }
+
+      // Update the component's visual scale.
+      scale.x = flipProgress.abs();
+      if (!isFlipping) {
+        x = origX;
+      } else {
+        // var xd1 = 
+        var xd = (width / 10) * (1 - ((flipProgress.abs() * 10.0).roundToDouble()) / 10.0);
+        if (flipProgress > 0) {
+          x += xd;
+        } else {
+          x -= xd;
+        }
+      }
+    });
   }
 }
 
