@@ -8,7 +8,7 @@ environment:
 
 # Add regular dependencies here.
 dependencies:
-  braincloud: ^5.8.0 
+  braincloud: ^5.9.0 
 
 dev_dependencies:
   lints: ^5.0.0

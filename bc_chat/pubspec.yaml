@@ -14,8 +14,8 @@ dependencies:
     sdk: flutter
   flutter_localizations:
     sdk: flutter
-  braincloud: ^5.8.0 
-  braincloud_data_persistence: ^5.8.0
+  braincloud: ^5.9.0 
+  braincloud_data_persistence: ^5.9.0
   shared_preferences: ^2.3.3
             
 dev_dependencies:

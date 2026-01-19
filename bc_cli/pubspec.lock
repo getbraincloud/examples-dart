@@ -53,10 +53,10 @@ packages:
     dependency: "direct main"
     description:
       name: braincloud
-      sha256: cb9d2e529e9a54715cce11f4016c982b0798c785d6798a319630db54d813509e
+      sha256: c1df9cf12ad88a06b0310aa78f31568557aa8cb34cc42fdb53f21caf586db724
       url: "https://pub.dev"
     source: hosted
-    version: "5.8.0"
+    version: "5.9.0"
   clock:
     dependency: transitive
     description:
@@ -197,10 +197,10 @@ packages:
     dependency: transitive
     description:
       name: intl
-      sha256: d6f56758b7d3014a48af9701c085700aac781a92a87a62b1333b46d8879661cf
+      sha256: "3df61194eb431efc39c4ceba583b95633a403f46c9fd341e550ce0bfa50e9aa5"
       url: "https://pub.dev"
     source: hosted
-    version: "0.19.0"
+    version: "0.20.2"
   io:
     dependency: transitive
     description:
