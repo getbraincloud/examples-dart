@@ -389,17 +389,21 @@ class SpiderGame extends FlameGame {
   ///     return [HintResult.shown].
   ///   • No meaningful move but the stock has cards → highlight the
   ///     stock pile and return [HintResult.dealFromStock].
-  ///   • No meaningful move and the stock is empty → return
-  ///     [HintResult.gameOver]. The host screen shows the dialog.
+  ///   • No meaningful move, stock empty, but a legal *setup* move
+  ///     exists (one that exposes a meaningful follow-up after a 1-ply
+  ///     lookahead — e.g. drop 4♠ onto an empty column so the 5♥ above
+  ///     can move next turn and reveal a face-down) → highlight that
+  ///     move and still return [HintResult.shown].
+  ///   • Neither a meaningful move nor a setup move exists and the
+  ///     stock is empty → return [HintResult.gameOver]. Pure
+  ///     card-shuffling between empty columns lives here, since no
+  ///     amount of shuffling exposes a meaningful follow-up.
   HintResult showHint() {
     _clearHint();
     if (_animating) return HintResult.busy;
     final best = _findBestMeaningfulMove();
     if (best != null) {
-      final cards = state.tableau[best.fromCol].sublist(best.fromIdx);
-      for (final card in cards) {
-        _byCard[card]?.hinted = true;
-      }
+      _highlightMove(best);
       _hintTimer = async.Timer(const Duration(seconds: 2), _clearHint);
       // Only the meaningful outcomes (shown / dealFromStock) cost the
       // player score — `busy` and `gameOver` don't give them anything
@@ -415,6 +419,19 @@ class SpiderGame extends FlameGame {
       onChanged?.call();
       return HintResult.dealFromStock;
     }
+    // Last resort: a "setup" move that doesn't advance the board on
+    // its own but exposes a meaningful follow-up one move later.
+    // Crucially this rejects pure cycling (e.g. K♠ bouncing between
+    // two empty columns) because no future-state from those moves has
+    // a meaningful move either.
+    final setup = _findLegalSetupMove();
+    if (setup != null) {
+      _highlightMove(setup);
+      _hintTimer = async.Timer(const Duration(seconds: 2), _clearHint);
+      state.applyHintPenalty();
+      onChanged?.call();
+      return HintResult.shown;
+    }
     return HintResult.gameOver;
   }
 
@@ -423,9 +440,18 @@ class SpiderGame extends FlameGame {
   /// target, or grow the longest same-suit run).
   bool hasAdvancingMove() => _findBestMeaningfulMove() != null;
 
-  /// True when the player is stuck — no advancing moves AND no stock
-  /// left to deal. Win-state is not considered game over here.
-  bool get isGameOver => state.stock.isEmpty && !hasAdvancingMove();
+  /// True when the player is truly stuck — no path to making progress
+  /// (now or one move out) AND no stock left to deal. Win-state is not
+  /// considered game over here.
+  ///
+  /// "Path to progress" means either a meaningful move is available
+  /// right now, or some legal setup move would expose a meaningful
+  /// follow-up. Pure shuffles between empty columns aren't a path —
+  /// they leave the board in an equivalent position.
+  bool get isGameOver =>
+      state.stock.isEmpty &&
+      _findBestMeaningfulMove() == null &&
+      _findLegalSetupMove() == null;
 
   _HintMove? _findBestMeaningfulMove() {
     _HintMove? bestMeaningful;
@@ -448,6 +474,51 @@ class SpiderGame extends FlameGame {
       }
     }
     return bestMeaningful;
+  }
+
+  /// One-ply lookahead: returns the leftmost-source legal move that
+  /// **after being applied** would expose at least one meaningful
+  /// move. Null if no such setup move exists.
+  ///
+  /// This is the discriminator between the previously broken extremes:
+  ///   - "meaningful now" missed two-step progress like
+  ///     `[face-down, 5♥, 4♠] + empty column`, where moving 4♠ to the
+  ///     empty enables 5♥ → 4♠ next turn (which reveals the face-down).
+  ///   - "any legal move" accepted pure cycling between empty columns
+  ///     as still-playable when it's a clear stalemate — every reachable
+  ///     state from such moves also has no meaningful follow-up.
+  ///
+  /// Simulates each candidate move via [SpiderGameState.snapshot] /
+  /// [SpiderGameState.restore]; `autoCollect: false` so the simulation
+  /// doesn't kick foundation-collection side effects we'd then have to
+  /// roll back.
+  _HintMove? _findLegalSetupMove() {
+    for (var fc = 0; fc < 10; fc++) {
+      final col = state.tableau[fc];
+      for (var i = 0; i < col.length; i++) {
+        if (!state.isMovableGroup(fc, i)) continue;
+        for (var tc = 0; tc < 10; tc++) {
+          if (fc == tc) continue;
+          if (!state.canDropOn(fc, i, tc)) continue;
+          final snap = state.snapshot();
+          state.moveGroup(fc, i, tc, autoCollect: false);
+          final next = _findBestMeaningfulMove();
+          state.restore(snap);
+          if (next != null) return _HintMove(fc, i, tc);
+        }
+      }
+    }
+    return null;
+  }
+
+  /// Marks the source card group of [move] as hinted so the view layer
+  /// paints the highlight halo. Used by both the meaningful-hint and
+  /// last-resort-hint paths.
+  void _highlightMove(_HintMove move) {
+    final cards = state.tableau[move.fromCol].sublist(move.fromIdx);
+    for (final card in cards) {
+      _byCard[card]?.hinted = true;
+    }
   }
 
   /// Fires [onGameOver] if we've reached a stuck state. Should be called
