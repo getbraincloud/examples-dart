@@ -43,12 +43,12 @@ class SpiderGame extends FlameGame {
     this.onGameOver,
     double? screenAspect,
     int? seed,
-  })  : virtualHeight = _resolveVirtualHeight(screenAspect),
-        state = SpiderGameState(
-          difficulty: difficulty,
-          seed: seed,
-          scoring: scoring,
-        );
+  }) : virtualHeight = _resolveVirtualHeight(screenAspect),
+       state = SpiderGameState(
+         difficulty: difficulty,
+         seed: seed,
+         scoring: scoring,
+       );
 
   final Difficulty difficulty;
 
@@ -91,17 +91,15 @@ class SpiderGame extends FlameGame {
 
   /// Position of foundation slot [index] using the dynamic [virtualHeight].
   Vector2 _foundationSlot(int index) => Vector2(
-        GameLayout.sidePadding + (GameLayout.cardWidth + 8) * index,
-        _slotRowY,
-      );
+    GameLayout.sidePadding + (GameLayout.cardWidth + 8) * index,
+    _slotRowY,
+  );
 
   /// Position of the stock pile using the dynamic [virtualHeight].
   Vector2 _stockPos() => Vector2(
-        GameLayout.virtualWidth -
-            GameLayout.sidePadding -
-            GameLayout.cardWidth,
-        _slotRowY,
-      );
+    GameLayout.virtualWidth - GameLayout.sidePadding - GameLayout.cardWidth,
+    _slotRowY,
+  );
 
   /// True when the game is laid out for short screens (phone landscape).
   /// In compact mode we reserve extra room on the left of the tableau so
@@ -123,17 +121,17 @@ class SpiderGame extends FlameGame {
   /// from the effective padding so 10 columns still span the full canvas.
   double get _tableauColumnSpacing =>
       (GameLayout.virtualWidth -
-              _tableauLeftPadding -
-              _tableauRightPadding -
-              GameLayout.cardWidth) /
-          9;
+          _tableauLeftPadding -
+          _tableauRightPadding -
+          GameLayout.cardWidth) /
+      9;
 
   /// Top-left position of tableau column [column] in virtual units.
   /// Replaces [GameLayout.columnOrigin] which uses a fixed padding.
   Vector2 _columnOrigin(int column) => Vector2(
-        _tableauLeftPadding + _tableauColumnSpacing * column,
-        GameLayout.tableauTop,
-      );
+    _tableauLeftPadding + _tableauColumnSpacing * column,
+    GameLayout.tableauTop,
+  );
 
   /// True while an animation is in flight; drag input is gated on this.
   bool _animating = false;
@@ -167,14 +165,18 @@ class SpiderGame extends FlameGame {
 
     final slotSize = Vector2(GameLayout.cardWidth, GameLayout.cardHeight);
     for (var i = 0; i < 8; i++) {
-      world.add(_FoundationComponent()
-        ..position = _foundationSlot(i)
-        ..size = slotSize);
+      world.add(
+        _FoundationComponent()
+          ..position = _foundationSlot(i)
+          ..size = slotSize,
+      );
     }
     for (var i = 0; i < 10; i++) {
-      world.add(_ColumnSlot()
-        ..position = _columnOrigin(i)
-        ..size = slotSize);
+      world.add(
+        _ColumnSlot()
+          ..position = _columnOrigin(i)
+          ..size = slotSize,
+      );
     }
 
     _stockArea = _StockComponent(game: this)
@@ -222,8 +224,9 @@ class SpiderGame extends FlameGame {
     final target = _bestAutoMoveTarget(fromCol, fromIdx);
     if (target == -1) return;
 
-    final movingCards =
-        List<PlayingCard>.from(state.tableau[fromCol].sublist(fromIdx));
+    final movingCards = List<PlayingCard>.from(
+      state.tableau[fromCol].sublist(fromIdx),
+    );
     _performMoveWithAnimation(fromCol, fromIdx, target, movingCards);
   }
 
@@ -348,11 +351,13 @@ class SpiderGame extends FlameGame {
       comp.priority = 8000 + i;
       final completer = async.Completer<void>();
       futures.add(completer);
-      comp.add(MoveToEffect(
-        targets[cards[i]]!,
-        EffectController(duration: duration, startDelay: delay),
-        onComplete: completer.complete,
-      ));
+      comp.add(
+        MoveToEffect(
+          targets[cards[i]]!,
+          EffectController(duration: duration, startDelay: delay),
+          onComplete: completer.complete,
+        ),
+      );
       delay += stagger;
     }
     await Future.wait(futures.map((c) => c.future));
@@ -371,11 +376,13 @@ class SpiderGame extends FlameGame {
         comp.priority = 12000 + run.foundationSlot * 100 + i;
         final completer = async.Completer<void>();
         futures.add(completer);
-        comp.add(MoveToEffect(
-          fnPos,
-          EffectController(duration: 0.32, startDelay: delay),
-          onComplete: completer.complete,
-        ));
+        comp.add(
+          MoveToEffect(
+            fnPos,
+            EffectController(duration: 0.32, startDelay: delay),
+            onComplete: completer.complete,
+          ),
+        );
         delay += 0.05;
       }
     }
@@ -477,16 +484,20 @@ class SpiderGame extends FlameGame {
   }
 
   /// One-ply lookahead: returns the leftmost-source legal move that
-  /// **after being applied** would expose at least one meaningful
-  /// move. Null if no such setup move exists.
+  /// **after being applied** would expose at least one *real progress*
+  /// move — one that reveals a face-down card or completes a 13-card
+  /// K→A foundation run. Null if no such setup move exists.
   ///
-  /// This is the discriminator between the previously broken extremes:
-  ///   - "meaningful now" missed two-step progress like
-  ///     `[face-down, 5♥, 4♠] + empty column`, where moving 4♠ to the
-  ///     empty enables 5♥ → 4♠ next turn (which reveals the face-down).
-  ///   - "any legal move" accepted pure cycling between empty columns
-  ///     as still-playable when it's a clear stalemate — every reachable
-  ///     state from such moves also has no meaningful follow-up.
+  /// "Real progress" is a strictly narrower criterion than the hint
+  /// heuristic in [_scoreHint]: it drops `lengthensRun`, even though
+  /// that's still a fine *direct* hint, because lengthening is only
+  /// monotonic step-by-step, not over a multi-move path. Split a run,
+  /// merge it back, and you've satisfied `lengthensRun` on the merge
+  /// — without making any actual progress. Restricting the lookahead
+  /// to revealing face-downs and completing foundations rules out
+  /// every cycle: both criteria are physically irreversible. Once a
+  /// face-down flips it stays face-up; once 13 cards leave the tableau
+  /// they're gone.
   ///
   /// Simulates each candidate move via [SpiderGameState.snapshot] /
   /// [SpiderGameState.restore]; `autoCollect: false` so the simulation
@@ -502,13 +513,59 @@ class SpiderGame extends FlameGame {
           if (!state.canDropOn(fc, i, tc)) continue;
           final snap = state.snapshot();
           state.moveGroup(fc, i, tc, autoCollect: false);
-          final next = _findBestMeaningfulMove();
+          final next = _findRealProgressMove();
           state.restore(snap);
           if (next != null) return _HintMove(fc, i, tc);
         }
       }
     }
     return null;
+  }
+
+  /// Returns the first legal move that, *on its own*, achieves real
+  /// progress: reveals a face-down card in the source column, or
+  /// completes a 13-card K→A same-suit run that the engine will then
+  /// auto-collect to a foundation. Both are physically irreversible
+  /// — the inverse move can never put the face-down card back or
+  /// drag the K→A run back out of the foundation — so they're safe to
+  /// use as the termination condition for cycle-free lookahead.
+  _HintMove? _findRealProgressMove() {
+    for (var fc = 0; fc < 10; fc++) {
+      final col = state.tableau[fc];
+      for (var i = 0; i < col.length; i++) {
+        if (!state.isMovableGroup(fc, i)) continue;
+        for (var tc = 0; tc < 10; tc++) {
+          if (fc == tc) continue;
+          if (!state.canDropOn(fc, i, tc)) continue;
+          if (_isRealProgress(fc, i, tc)) return _HintMove(fc, i, tc);
+        }
+      }
+    }
+    return null;
+  }
+
+  /// True iff the candidate move `(fc, i) → tc` either reveals a
+  /// face-down card in the source column or completes a 13-card K→A
+  /// same-suit run on the destination.
+  bool _isRealProgress(int fc, int i, int tc) {
+    final srcCol = state.tableau[fc];
+    // Reveals a face-down card?
+    if (i > 0 && !srcCol[i - 1].faceUp) return true;
+    // Completes a K→A run?
+    final src = srcCol[i];
+    final tgt = state.tableau[tc];
+    final groupLen = srcCol.length - i;
+    if (tgt.isNotEmpty && tgt.last.suit == src.suit) {
+      // Group merges with the destination's bottom same-suit streak.
+      final dstRun = _bottomSameSuitStreak(tc);
+      if (dstRun + groupLen >= 13) return true;
+    } else if (groupLen >= 13) {
+      // The moving group is already a complete K→A run (only legal
+      // target in this case is an empty column, since K can't land on
+      // anything). Dropping it triggers foundation collection.
+      return true;
+    }
+    return false;
   }
 
   /// Marks the source card group of [move] as hinted so the view layer
@@ -550,45 +607,55 @@ class SpiderGame extends FlameGame {
   ///
   /// A move is considered meaningful iff at least one of these holds:
   ///   • It reveals a face-down card in the source column.
-  ///   • It empties the source column onto a non-empty target.
   ///   • It makes the longest same-suit descending run in the two
   ///     affected columns *strictly longer* than it was before.
+  ///   • It completes a 13-card K→A same-suit run, which the engine
+  ///     immediately auto-collects to a foundation slot.
   ///
-  /// The third clause is the fix for the "just shuffling cards" case:
-  /// moving a same-suit group onto a same-suit target only counts when
-  /// the merged run is bigger than any run that existed before — moves
-  /// that just relocate a run from one column to another return null.
+  /// All three criteria are intentionally **one-way** — none of them
+  /// is satisfied by the inverse of a previously-meaningful move — so
+  /// the hint / setup-detection system can never lock into a cycle:
+  ///   • Revealing a face-down card is sticky.
+  ///   • Lengthening the longest run on the board only registers in
+  ///     one direction; the inverse move shortens it.
+  ///   • Completing a run ships cards out of the tableau entirely.
+  ///
+  /// Previously this method also counted "empties the source onto a
+  /// non-empty target" as meaningful. That turned out to be **two-way**:
+  /// moving a whole movable group from a non-empty column onto a
+  /// non-empty target left both columns swapped, and the inverse move
+  /// was also emptiesSource. With [_findLegalSetupMove] doing 1-ply
+  /// lookahead, each direction was discovered as the "setup" for the
+  /// other and the game refused to declare itself over. The case where
+  /// emptying genuinely matters (e.g. clearing space so a King can drop
+  /// in) is still picked up by the lookahead, but via the *follow-up*
+  /// move (which has to satisfy one of the one-way criteria above).
   int? _scoreHint(int fromCol, int fromIdx, int toCol) {
     final srcCol = state.tableau[fromCol];
     final src = srcCol[fromIdx];
     final tgt = state.tableau[toCol];
 
-    final revealsFaceDown =
-        fromIdx > 0 && !srcCol[fromIdx - 1].faceUp;
-    final emptiesSource = fromIdx == 0 && tgt.isNotEmpty;
+    final revealsFaceDown = fromIdx > 0 && !srcCol[fromIdx - 1].faceUp;
 
     // Same-suit run lengths on the two affected columns, before and after.
     final groupLen = srcCol.length - fromIdx;
     final beforeSrcRun = _bottomSameSuitStreak(fromCol);
     final beforeDstRun = _bottomSameSuitStreak(toCol);
-    final beforeMax =
-        beforeSrcRun > beforeDstRun ? beforeSrcRun : beforeDstRun;
+    final beforeMax = beforeSrcRun > beforeDstRun ? beforeSrcRun : beforeDstRun;
 
     final dstMatchesSuit = tgt.isNotEmpty && tgt.last.suit == src.suit;
     final newDstRun = dstMatchesSuit ? beforeDstRun + groupLen : groupLen;
     final newSrcRun = _runLengthAfterRemovingTail(fromCol, fromIdx);
     final afterMax = newSrcRun > newDstRun ? newSrcRun : newDstRun;
     final lengthensRun = afterMax > beforeMax;
+    final completesRun = newDstRun >= 13;
 
-    if (!revealsFaceDown && !emptiesSource && !lengthensRun) return null;
+    if (!revealsFaceDown && !lengthensRun && !completesRun) return null;
 
     var score = 0;
     if (revealsFaceDown) score += 100;
-    if (emptiesSource) score += 50;
     if (lengthensRun) score += 60 + (afterMax - beforeMax) * 10;
-    // Completing a K→A run ships it straight to a foundation slot, which
-    // is the single best thing a move can do.
-    if (newDstRun >= 13) score += 500;
+    if (completesRun) score += 500;
     return score;
   }
 
@@ -696,14 +763,16 @@ class SpiderGame extends FlameGame {
         final shouldFlip = targetFaceUp[card] == true;
         final completer = async.Completer<void>();
         completers.add(completer);
-        comp.add(MoveToEffect(
-          target,
-          EffectController(duration: moveDuration, startDelay: stagger),
-          onComplete: () {
-            if (shouldFlip) card.faceUp = true;
-            completer.complete();
-          },
-        ));
+        comp.add(
+          MoveToEffect(
+            target,
+            EffectController(duration: moveDuration, startDelay: stagger),
+            onComplete: () {
+              if (shouldFlip) card.faceUp = true;
+              completer.complete();
+            },
+          ),
+        );
         y += GameLayout.faceDownFan;
         stagger += perCardDelay;
       }
@@ -831,9 +900,7 @@ class SpiderGame extends FlameGame {
     _dragFromIndex = idx;
     _dragGroup
       ..clear()
-      ..addAll(state.tableau[col]
-          .sublist(idx)
-          .map((c) => _byCard[c]!));
+      ..addAll(state.tableau[col].sublist(idx).map((c) => _byCard[c]!));
     for (var i = 0; i < _dragGroup.length; i++) {
       _dragGroup[i].priority = 5000 + i;
     }
@@ -859,8 +926,7 @@ class SpiderGame extends FlameGame {
         state.canDropOn(_dragFromColumn, _dragFromIndex, targetColumn)) {
       final fromCol = _dragFromColumn;
       final fromIdx = _dragFromIndex;
-      final movingCards =
-          _dragGroup.map((c) => c.card).toList(growable: false);
+      final movingCards = _dragGroup.map((c) => c.card).toList(growable: false);
       _dragGroup.clear();
       _dragFromColumn = -1;
       _dragFromIndex = -1;
@@ -928,14 +994,16 @@ class SpiderGame extends FlameGame {
       comp.position = _stockPos();
       final completer = async.Completer<void>();
       futures.add(completer);
-      comp.add(MoveToEffect(
-        target,
-        EffectController(duration: moveDuration, startDelay: stagger),
-        onComplete: () {
-          card.faceUp = true;
-          completer.complete();
-        },
-      ));
+      comp.add(
+        MoveToEffect(
+          target,
+          EffectController(duration: moveDuration, startDelay: stagger),
+          onComplete: () {
+            card.faceUp = true;
+            completer.complete();
+          },
+        ),
+      );
       stagger += perCardDelay;
     }
     await Future.wait(futures.map((c) => c.future));
@@ -985,9 +1053,9 @@ class _HintMove {
 }
 
 RRect _slotRRect(Vector2 size) => RRect.fromRectAndRadius(
-      Rect.fromLTWH(0, 0, size.x, size.y),
-      const Radius.circular(12),
-    );
+  Rect.fromLTWH(0, 0, size.x, size.y),
+  const Radius.circular(12),
+);
 
 /// Outline for an empty tableau column.
 class _ColumnSlot extends PositionComponent {
