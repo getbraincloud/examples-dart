@@ -19,16 +19,16 @@ cd examples-dart/spider_solitaire
 flutter pub get
 ```
 
-4.	Configure brainCloud:
-* Obtain your brainCloud app credentials from the brainCloud portal.
-* Update the launch parameters MY_APPID and MY_SECRET with your App Id and App Secret.
-* BrainCloudConfig reads these: 
-```dart
-    static const String appId = String.fromEnvironment('APPID');
-    static const String serverSecret = String.fromEnvironment('APPSECRET');
+4. Create a bc_config.json file for your app 
+```json
+{
+    "secretKey":"<app secret from brainCloud portal>",
+    "appId": "<app id from brainCloud portal>",
+    "version": "1.0.0"
+}
 ```
-	
-5.	Run the Application:
+
+5. Run the app
 ```shell
-flutter run  --dart-define=APPID=MY_APPID --dart-define=APPSECRET=MY_SECRET
+flutter run --dart-define-from-file=bc_config.json
 ```

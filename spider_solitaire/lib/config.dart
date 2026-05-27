@@ -5,9 +5,9 @@
 class BrainCloudConfig {
   static const String serverUrl =
       'https://api.braincloudservers.com/dispatcherv2';
-  static const String appId = String.fromEnvironment('APPID');
-  static const String serverSecret = String.fromEnvironment('APPSECRET');
-  static const String appVersion = '1.0.0';
+  static const String appId = String.fromEnvironment('appId');
+  static const String serverSecret = String.fromEnvironment('secretKey');
+  static const String appVersion = String.fromEnvironment('version');
   static const String wrapperName = 'spider_solitaire_wrapper';
 }
 
