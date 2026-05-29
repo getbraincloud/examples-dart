@@ -58,7 +58,14 @@ class BrainCloudService {
   }
 
   Future<void> authenticateAnonymous() async {
-    final response = await _bc.authenticateAnonymous();
+    var response = await _bc.authenticateAnonymous();
+    if (!response.isSuccess() && response.reasonCode == 40206) {
+      // Stale profile stored locally no longer exists on the server.
+      // Reset and create a fresh anonymous profile.
+      _bc.resetStoredProfileId();
+      _bc.resetStoredAnonymousId();
+      response = await _bc.authenticateAnonymous();
+    }
     if (!response.isSuccess()) {
       throw StateError(
         'brainCloud anonymous auth failed '
