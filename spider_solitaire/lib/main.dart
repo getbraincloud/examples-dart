@@ -118,27 +118,29 @@ class _BootstrapperState extends State<_Bootstrapper> {
             body: Center(
               child: Padding(
                 padding: const EdgeInsets.all(24),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Text(
-                      'Could not connect to brainCloud',
-                      style: TextStyle(fontSize: 20, color: Colors.white),
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      '${snap.error}',
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(color: Colors.white70),
-                    ),
-                    const SizedBox(height: 24),
-                    FilledButton(
-                      onPressed: () => setState(() {
-                        _future = _init();
-                      }),
-                      child: const Text('Retry'),
-                    ),
-                  ],
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Text(
+                        'Could not connect to brainCloud',
+                        style: TextStyle(fontSize: 20, color: Colors.white),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        '${snap.error}',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(color: Colors.white70),
+                      ),
+                      const SizedBox(height: 24),
+                      FilledButton(
+                        onPressed: () => setState(() {
+                          _future = _init();
+                        }),
+                        child: const Text('Retry'),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
