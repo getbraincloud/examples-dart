@@ -33,7 +33,7 @@ dependencies:
 
   cupertino_icons: ^1.0.8
   flame: ^1.20.0
-  braincloud: ^5.5.0
+  braincloud: ^5.9.0
   shared_preferences: ^2.2.2
 
 dev_dependencies:

@@ -22,6 +22,7 @@ flutter pub get
 4. Create a bc_config.json file for your app 
 ```json
 {
+    "serverUrl":"https://api.braincloudservers.com/dispatcherv2",
     "secretKey":"<app secret from brainCloud portal>",
     "appId": "<app id from brainCloud portal>",
     "version": "1.0.0"

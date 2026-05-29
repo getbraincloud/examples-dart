@@ -3,8 +3,7 @@
 /// Replace these placeholders with the App ID and Server Secret from the
 /// brainCloud Design Portal (Application IDs page).
 class BrainCloudConfig {
-  static const String serverUrl =
-      'https://api.braincloudservers.com/dispatcherv2';
+  static const String serverUrl = String.fromEnvironment('serverUrl');
   static const String appId = String.fromEnvironment('appId');
   static const String serverSecret = String.fromEnvironment('secretKey');
   static const String appVersion = String.fromEnvironment('version');
