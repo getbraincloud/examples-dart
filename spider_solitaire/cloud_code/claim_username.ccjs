@@ -1,0 +1,322 @@
+// claim_username.ccjs
+//
+// Reserves a unique display name for the calling player by:
+//   1. Validating the requested name (length, character set, no URLs,
+//      no obvious profanity).
+//   2. Asking brainCloud's Friend service for any existing profile with
+//      that exact playerName.
+//   3. If found and it's not us → return NAME_TAKEN.
+//      Otherwise → set our profile's playerName via playerState.updateName.
+//
+// No Custom Entities required. The only state is the playerName stored
+// on each player's own profile.
+//
+// Caveat: this is a check-then-write pattern. A small race window is
+// closed by a recheck after the update.
+//
+// Portal setup required (one-time):
+//   1. Design > Cloud Code > Scripts > Upload claim_username.ccjs
+//        - clientCallable: true
+//        - s2sCallable:    false
+//        - scriptTimeout:  30
+//   2. Make sure player display names are searchable. In the brainCloud
+//      portal: Design > Cloud > Application Settings (and/or the User
+//      Identity / Friend Service section) → ensure the equivalent of
+//      "Player Display Name searchable" is enabled. If anonymous
+//      profiles are excluded from friend-service search, the duplicate
+//      check below will never find existing users and duplicates will
+//      slip through.
+//
+// Request (scriptData):
+//   { "userName": "RickM" }
+//
+// Response:
+//   success → { success: true, userName: "RickM", debug: {...} }
+//   failure → throws with reasonCode INVALID_NAME | NAME_TAKEN | UPDATE_FAILED
+
+var BAD_WORDS = [
+    "fuck", "fck", "fuk",
+    "shit", "sht",
+    "bitch", "btch",
+    "cunt",
+    "dick",
+    "cock",
+    "pussy", "pussi",
+    "nigger", "nigga",
+    "faggot",
+    "whore",
+    "slut",
+    "twat",
+    "asshole",
+    "bastard",
+    "motherfucker"
+];
+
+var URL_TLD_RE =
+    /\.(com|net|org|io|co|uk|ca|us|gov|edu|biz|info|me|app|dev|xyz|top|site|online|store|tech|ai|tv|fm|gg|sh)\b/i;
+
+function main() {
+    // brainCloud cloud code exposes the client's scriptData payload as
+    // the `data` global. Older docs sometimes refer to it as
+    // `scriptData`, which is NOT defined in the current runtime — so
+    // accessing it throws ReferenceError and the script bails before
+    // any of the validation/uniqueness logic runs. Read from `data`,
+    // with a defensive fallback for any environment that still
+    // exposes the legacy name.
+    var input = (typeof data !== "undefined" && data)
+        ? data
+        : ((typeof scriptData !== "undefined" && scriptData)
+            ? scriptData
+            : {});
+    var requested = (input && input.userName)
+        ? String(input.userName).trim()
+        : "";
+
+    if (requested.length < 2 || requested.length > 24) {
+        return errorResponse(400, "INVALID_NAME",
+            "Name must be 2–24 characters.");
+    }
+    if (!/^[A-Za-z0-9 _.-]+$/.test(requested)) {
+        return errorResponse(400, "INVALID_NAME",
+            "Name can only contain letters, numbers, spaces, _ . -");
+    }
+    if (looksLikeUrl(requested)) {
+        return errorResponse(400, "INVALID_NAME",
+            "Name can't look like a URL.");
+    }
+    if (containsProfanity(requested)) {
+        return errorResponse(400, "INVALID_NAME",
+            "Name contains language that isn't allowed.");
+    }
+
+    // Calling player's profile id. Some brainCloud cloud-code runtimes
+    // expose `sessionProfileId` as a global, others expose
+    // `bridge.getRequestProfileId()` or similar, and some expose
+    // neither. The client now passes profileId in the request payload,
+    // which is the only path guaranteed to work everywhere.
+    var myProfileId = "" + (input.profileId || "");
+    if (!myProfileId) {
+        try {
+            if (typeof sessionProfileId !== "undefined") {
+                myProfileId = "" + sessionProfileId;
+            }
+        } catch (e) { /* runtime doesn't expose it */ }
+    }
+    if (!myProfileId && bridge.getRequestProfileId) {
+        try { myProfileId = "" + bridge.getRequestProfileId(); } catch (e) {}
+    }
+    if (!myProfileId) {
+        return errorResponse(400, "MISSING_PROFILE",
+            "Calling profile id not available.");
+    }
+
+    var friend = bridge.getFriendServiceProxy();
+
+    // 1. Look for any existing player using this name. Combines an
+    //    exact-name lookup with a substring fallback that we filter
+    //    back down to exact case-insensitive matches — some brainCloud
+    //    apps return zero results from findUsersByExactName for
+    //    anonymous players even when matching profiles exist.
+    var search = searchForName(friend, requested, myProfileId);
+    if (search.taken) {
+        var err = errorResponse(409, "NAME_TAKEN",
+            "That name is already in use. Try another.");
+        err.suggestions = generateSuggestions(friend, requested, myProfileId);
+        return err;
+    }
+
+    // 2. Claim it. The playerState proxy in cloud code has been called
+    //    both `updateName` and `updateUserName` across brainCloud
+    //    versions — we try each in turn and surface whichever error
+    //    sticks.
+    var ps = bridge.getPlayerStateServiceProxy();
+    var updateResp = setPlayerName(ps, requested);
+    if (!updateResp || updateResp.status !== 200) {
+        return errorResponse(
+            updateResp ? updateResp.status : 500,
+            "UPDATE_FAILED",
+            "Could not update profile name: " +
+                ((updateResp && updateResp.status_message) || "no compatible method"));
+    }
+
+    // 3. Re-check to close the race window.
+    var recheck = searchForName(friend, requested, myProfileId);
+    if (recheck.taken) {
+        var fallback = "Player " + myProfileId.substring(0, 6);
+        setPlayerName(ps, fallback);
+        return errorResponse(409, "NAME_TAKEN",
+            "Another player just claimed that name. Try a different one.");
+    }
+
+    return {
+        success: true,
+        userName: requested,
+        // Diagnostic block — the client logs this so we can verify the
+        // friend-service lookup is actually returning results. If
+        // *MatchCount is always 0 even when duplicate names exist in
+        // the leaderboard, the portal's name-searchable setting is the
+        // culprit (no client-side fix possible).
+        debug: {
+            myProfileId: myProfileId,
+            initialSearch: search,
+            recheckSearch: recheck
+        }
+    };
+}
+
+/// Returns up to three available `{base}{N}` variants that pass the
+/// same name validators and aren't yet taken. Stops scanning once we
+/// have three or hit a sensible cap. Called only on the NAME_TAKEN
+/// path, so the extra lookups don't affect the happy case.
+function generateSuggestions(friend, base, myProfileId) {
+    var suggestions = [];
+    var maxLen = 24;
+    for (var n = 1; n <= 99 && suggestions.length < 3; n++) {
+        var candidate = base + n;
+        if (candidate.length > maxLen) break;
+        // Quick re-validation in case the user picked a base that
+        // wouldn't be valid with a suffix appended.
+        if (!/^[A-Za-z0-9 _.-]+$/.test(candidate)) continue;
+        if (containsProfanity(candidate)) continue;
+        var s = searchForName(friend, candidate, myProfileId);
+        if (!s.taken) suggestions.push(candidate);
+    }
+    return suggestions;
+}
+
+/// Searches for [name] using both the exact-name and substring lookups,
+/// and decides whether another user already has that exact name.
+function searchForName(friend, name, myProfileId) {
+    var result = {
+        taken: false,
+        exactStatus: 0,
+        exactMatchCount: 0,
+        substrStatus: 0,
+        substrMatchCount: 0,
+        matchedIds: []
+    };
+
+    var exactResp = friend.findUsersByExactName(name, 25);
+    result.exactStatus = exactResp ? exactResp.status : -1;
+    if (exactResp && exactResp.status === 200) {
+        var exactMatches = pickMatches(exactResp.data);
+        result.exactMatchCount = exactMatches.length;
+        var hit = anotherUserMatches(exactMatches, myProfileId);
+        if (hit) {
+            result.taken = true;
+            result.matchedIds.push(hit);
+        }
+    }
+
+    if (!result.taken) {
+        // Substring fallback. Filter results back down to entries whose
+        // name is an exact case-insensitive match of what we asked for.
+        var substrResp = friend.findUsersBySubstrName(name, 25);
+        result.substrStatus = substrResp ? substrResp.status : -1;
+        if (substrResp && substrResp.status === 200) {
+            var substrMatches = pickMatches(substrResp.data);
+            result.substrMatchCount = substrMatches.length;
+            var target = name.toLowerCase();
+            for (var i = 0; i < substrMatches.length; i++) {
+                var entry = substrMatches[i];
+                var theirId = entryId(entry);
+                var theirName = entryName(entry);
+                if (theirId && theirId !== myProfileId &&
+                    theirName && theirName.toLowerCase() === target) {
+                    result.taken = true;
+                    result.matchedIds.push(theirId);
+                    break;
+                }
+            }
+        }
+    }
+
+    return result;
+}
+
+/// Updates the calling player's profile playerName. brainCloud's
+/// playerState cloud-code proxy has been called both `updateName` and
+/// `updateUserName` across versions, and at least one runtime exposes
+/// only the latter — so try them in order and surface the first one
+/// that returns a real ServerResponse.
+function setPlayerName(ps, name) {
+    var candidates = ["updateName", "updateUserName", "updatePlayerName"];
+    for (var i = 0; i < candidates.length; i++) {
+        var methodName = candidates[i];
+        try {
+            var fn = ps[methodName];
+            if (typeof fn === "function") {
+                return fn.call(ps, name);
+            }
+        } catch (e) {
+            // method exists but threw — try the next candidate
+        }
+    }
+    return null;
+}
+
+function pickMatches(data) {
+    if (!data) return [];
+    return data.matched || data.matches || data.users || data.results || [];
+}
+
+function entryId(entry) {
+    if (!entry) return null;
+    return entry.profileId || entry.userId || entry.playerId || entry.id ||
+        (entry.playerInfo && entry.playerInfo.profileId) || null;
+}
+
+function entryName(entry) {
+    if (!entry) return null;
+    return entry.playerName || entry.userName || entry.name || null;
+}
+
+function anotherUserMatches(matches, myProfileId) {
+    for (var i = 0; i < matches.length; i++) {
+        var theirId = entryId(matches[i]);
+        if (theirId && theirId !== myProfileId) return theirId;
+    }
+    return null;
+}
+
+function looksLikeUrl(name) {
+    var lower = name.toLowerCase();
+    if (lower.indexOf("www.") !== -1) return true;
+    if (URL_TLD_RE.test(lower)) return true;
+    return false;
+}
+
+function containsProfanity(name) {
+    var normalized = name.toLowerCase()
+        .replace(/[\s\-_.]/g, "")
+        .replace(/4/g, "a")
+        .replace(/3/g, "e")
+        .replace(/0/g, "o")
+        .replace(/1/g, "i")
+        .replace(/5/g, "s")
+        .replace(/7/g, "t");
+    for (var i = 0; i < BAD_WORDS.length; i++) {
+        if (normalized.indexOf(BAD_WORDS[i]) !== -1) return true;
+    }
+    return false;
+}
+
+function errorResponse(status, reasonCode, message) {
+    // brainCloud's cloud-code runtime is inconsistent about how a
+    // `throw { status, reason_code, status_message }` propagates back
+    // to the client — in some builds it surfaces as the response's
+    // top-level error, in others it just gets logged server-side and
+    // the response comes back to the client as a generic success.
+    // RETURNING the same error envelope is portable: the client
+    // wrapper (BrainCloudService.runScript) checks the unwrapped data
+    // for an embedded {status, reason_code, status_message} and throws
+    // when it finds a non-200 envelope, so this works regardless of
+    // the server-side throw behaviour.
+    return {
+        status: status,
+        reason_code: reasonCode,
+        status_message: message
+    };
+}
+
+main();
