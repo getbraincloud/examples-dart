@@ -1,7 +1,7 @@
 import 'package:bc_chat/src/model/channel.dart';
 import 'package:bc_chat/src/screens/login.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'localization/app_localizations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:braincloud/braincloud.dart';
 import 'package:braincloud_data_persistence/braincloud_data_persistence.dart';

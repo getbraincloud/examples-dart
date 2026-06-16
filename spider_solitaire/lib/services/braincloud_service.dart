@@ -54,7 +54,6 @@ class BrainCloudService {
       url: serverUrl,
       updateTick: 50,
     );
-    _bc.enableLongSession(true);
   }
 
   Future<void> authenticateAnonymous() async {
