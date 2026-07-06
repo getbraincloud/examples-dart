@@ -53,10 +53,10 @@ packages:
     dependency: "direct main"
     description:
       name: braincloud
-      sha256: c1df9cf12ad88a06b0310aa78f31568557aa8cb34cc42fdb53f21caf586db724
+      sha256: "23818c3701b6d2a36478e33f5a8787deab279a054f4966eefb5bb134f68ae11e"
       url: "https://pub.dev"
     source: hosted
-    version: "5.9.0"
+    version: "6.0.0"
   characters:
     dependency: transitive
     description:

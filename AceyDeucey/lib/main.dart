@@ -105,8 +105,10 @@ class _MyAppState extends State<MyApp> {
             );
           } else if (snapshot.connectionState == ConnectionState.done &&
               snapshot.hasError) {
-            /// Display error
-            page = Text(snapshot.error.toString());
+            page = Directionality(
+              textDirection: TextDirection.ltr,
+              child: Text(snapshot.error.toString()),
+            );
           }
 
           return page;
