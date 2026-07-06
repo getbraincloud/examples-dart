@@ -27,11 +27,12 @@ class BrainCloudService {
     required this.serverSecret,
     String wrapperName = 'spider_solitaire_wrapper',
     BrainCloudWrapper? wrapper,
-  }) : _bc = wrapper ??
-            BrainCloudWrapper(
-              wrapperName: wrapperName,
-              persistence: _SharedPrefsPersistence(),
-            );
+  }) : _bc =
+           wrapper ??
+           BrainCloudWrapper(
+             wrapperName: wrapperName,
+             persistence: _SharedPrefsPersistence(),
+           );
 
   final String serverUrl;
   final String appId;
@@ -54,6 +55,7 @@ class BrainCloudService {
       url: serverUrl,
       updateTick: 50,
     );
+    _bc.enableAutoReconnect(true);
   }
 
   Future<void> authenticateAnonymous() async {
@@ -78,8 +80,9 @@ class BrainCloudService {
   Future<Map<String, dynamic>> incrementUserStats(
     Map<String, dynamic> increments,
   ) async {
-    final response = await _bc.playerStatisticsService
-        .incrementUserStats(statistics: increments);
+    final response = await _bc.playerStatisticsService.incrementUserStats(
+      statistics: increments,
+    );
     _throwIfFailed(response, 'incrementUserStats');
     return _unwrap(response.data);
   }
@@ -95,8 +98,9 @@ class BrainCloudService {
   /// check for uniqueness — use the `claim_username` Cloud Code script
   /// via [runScript] if you want unique display names.
   Future<void> updateUserName(String name) async {
-    final response =
-        await _bc.playerStateService.updateUserName(userName: name);
+    final response = await _bc.playerStateService.updateUserName(
+      userName: name,
+    );
     _throwIfFailed(response, 'updateUserName');
   }
 
@@ -170,16 +174,19 @@ class BrainCloudService {
     required SocialLeaderboardType leaderboardType,
     Map<String, dynamic>? data,
   }) async {
-    final response =
-        await _bc.socialLeaderboardService.postScoreToDynamicLeaderboardUTC(
-      leaderboardId: leaderboardId,
-      score: score,
-      data: data,
-      leaderboardType: leaderboardType,
-      rotationType: RotationType.NEVER,
-      retainedCount: 100,
+    final response = await _bc.socialLeaderboardService
+        .postScoreToDynamicLeaderboardUTC(
+          leaderboardId: leaderboardId,
+          score: score,
+          data: data,
+          leaderboardType: leaderboardType,
+          rotationType: RotationType.NEVER,
+          retainedCount: 100,
+        );
+    _throwIfFailed(
+      response,
+      'postScoreToDynamicLeaderboardUTC($leaderboardId)',
     );
-    _throwIfFailed(response, 'postScoreToDynamicLeaderboardUTC($leaderboardId)');
   }
 
   /// Returns one page of entries from a global leaderboard.
@@ -193,13 +200,13 @@ class BrainCloudService {
     int startIndex = 0,
     int endIndex = 99,
   }) async {
-    final response =
-        await _bc.socialLeaderboardService.getGlobalLeaderboardPage(
-      leaderboardId: leaderboardId,
-      sortOrder: sortOrder,
-      startIndex: startIndex,
-      endIndex: endIndex,
-    );
+    final response = await _bc.socialLeaderboardService
+        .getGlobalLeaderboardPage(
+          leaderboardId: leaderboardId,
+          sortOrder: sortOrder,
+          startIndex: startIndex,
+          endIndex: endIndex,
+        );
     _throwIfFailed(response, 'getGlobalLeaderboardPage($leaderboardId)');
     return _unwrap(response.data);
   }
