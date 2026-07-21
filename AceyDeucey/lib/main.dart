@@ -61,7 +61,7 @@ class _MyAppState extends State<MyApp> {
           'version is not set. Create a bc_config.json and run with --dart-define-from-file=bc_config.json');
     }
 
-    const url = String.fromEnvironment('url');
+    const url = String.fromEnvironment('serverUrl');
     // if (url.isEmpty) {
     //   throw AssertionError(
     //       'url is not set. Create a bc_config.json and run with --dart-define-from-file=bc_config.json');

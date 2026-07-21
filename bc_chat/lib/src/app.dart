@@ -20,9 +20,9 @@ class MyApp extends StatelessWidget {
 
   final SettingsController settingsController;
   final BrainCloudWrapper _bc = BrainCloudWrapper(persistence: DataPersistence());
-  final String appId = const String.fromEnvironment("APPID", defaultValue: "");
-  final String secretKey = const String.fromEnvironment("APPSECRET", defaultValue: "");
-  final String serverUrl = const String.fromEnvironment("SERVERURL", defaultValue: "");
+  final String appId = const String.fromEnvironment("appId", defaultValue: "");
+  final String secretKey = const String.fromEnvironment("secretKey", defaultValue: "");
+  final String serverUrl = const String.fromEnvironment("serverUrl", defaultValue: "");
 
   void initBc() {
     if (!_bc.isInitialized) {
