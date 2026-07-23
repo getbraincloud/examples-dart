@@ -181,7 +181,7 @@ class BrainCloudService {
           data: data,
           leaderboardType: leaderboardType,
           rotationType: RotationType.NEVER,
-          retainedCount: 100,
+          retainedCount: 8,
         );
     _throwIfFailed(
       response,
