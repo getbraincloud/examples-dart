@@ -1,0 +1,35 @@
+// ConsumeCurrency.ccjs
+//
+// Consumes vcAmount units of the "bucks" virtual currency from the
+// calling player. Called by the client via scriptService.runScript
+// whenever a hand is lost or a bet is placed (see lib/main.dart
+// consumeCurrency()).
+//
+// Portal setup required (one-time):
+//   1. Design > Marketplace > Virtual Currencies > create a currency with ID "bucks".
+//   2. Design > Cloud Code > Scripts > Upload ConsumeCurrency.ccjs
+//        - clientCallable: true
+//        - s2sCallable:    false
+//        - scriptTimeout:  20
+//
+// Request (scriptData):
+//   { "vcAmount": <int> }
+//
+// Response:
+//   0 (always — this sample script does not check the consume result,
+//      e.g. it does not guard against a balance going negative)
+
+"use strict";
+
+function main() {
+
+	var vcId = "bucks";
+    var vcAmount = data.vcAmount;
+    var virtualCurrencyProxy = bridge.getVirtualCurrencyServiceProxy();
+
+    var postResult = virtualCurrencyProxy.consumeCurrency(vcId, vcAmount);
+
+	return 0;
+}
+
+main();
