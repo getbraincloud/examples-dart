@@ -181,7 +181,7 @@ class BrainCloudService {
           data: data,
           leaderboardType: leaderboardType,
           rotationType: RotationType.NEVER,
-          retainedCount: 100,
+          retainedCount: 8,
         );
     _throwIfFailed(
       response,
@@ -194,6 +194,11 @@ class BrainCloudService {
   /// brainCloud expects `sortOrder` to match the way the leaderboard was
   /// configured on the server. The returned map contains a `leaderboard`
   /// list with `[{playerId, playerName, score, data, rank, ...}, ...]`.
+  ///
+  /// A leaderboard only starts existing once someone posts the first score
+  /// to it (see `postScore`), so reading one nobody has played yet returns
+  /// `noLeaderboardFound` rather than an empty page — treat that the same
+  /// as "no entries" instead of surfacing it as an error.
   Future<Map<String, dynamic>> getLeaderboardPage({
     required String leaderboardId,
     required SortOrder sortOrder,
@@ -207,6 +212,10 @@ class BrainCloudService {
           startIndex: startIndex,
           endIndex: endIndex,
         );
+    if (!response.isSuccess() &&
+        response.reasonCode == ReasonCodes.noLeaderboardFound) {
+      return const {'leaderboard': []};
+    }
     _throwIfFailed(response, 'getGlobalLeaderboardPage($leaderboardId)');
     return _unwrap(response.data);
   }
