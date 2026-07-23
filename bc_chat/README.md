@@ -1,6 +1,6 @@
 # bc_chat
 
-bc_chat is a Flutter-based example application demonstrating the integration of brainCloud’s chat features. This sample app showcases how to implement real-time chat functionalities using the brainCloud backend services.
+bc_chat is a Flutter-based example application demonstrating the integration of brainCloud's chat features. This sample app showcases how to implement real-time chat functionalities using the brainCloud backend services.
 
 ## Features
 
@@ -12,34 +12,27 @@ bc_chat is a Flutter-based example application demonstrating the integration of 
 
 ## Prerequisites
 
-Before running the application, ensure you have the following installed:
-* Dart SDK
-* Flutter SDK
-* Enable Chat in brainCloud portal (Design->Messaging->Chat)
+See the [repository README](../README.md) for installing Flutter and creating a brainCloud app. This sample additionally needs:
+* Chat enabled in the brainCloud portal (Design > Messaging > Chat)
 
 ## Getting Started
 
-1.	Clone the Repository:
-```shell
-git clone https://github.com/getbraincloud/examples-dart.git
-```
-
-2.	Navigate to the bc_chat Directory:
-```shell
-cd examples-dart/bc_chat
-```
-
-3.	Install Dependencies:
+1. Install dependencies:
 ```shell
 flutter pub get
 ```
 
-4.	Configure brainCloud:
-* Obtain your brainCloud app credentials from the brainCloud portal.
-* Update the launch parameters MY_APPID and MY_SECRET with your App Id and App Secret.
-	
-5.	Run the Application:
-```shell
-flutter run  --dart-define=APPID=MY_APPID --dart-define=APPSECRET=MY_SECRET
+2. Create a `bc_config.json` file in this folder, pointing at your own brainCloud app:
+```json
+{
+    "serverUrl": "https://api.braincloudservers.com/dispatcherv2",
+    "secretKey": "<app secret from brainCloud portal>",
+    "appId": "<app id from brainCloud portal>",
+    "version": "1.0.0"
+}
 ```
 
+3. Run the app:
+```shell
+flutter run --dart-define-from-file=bc_config.json
+```
