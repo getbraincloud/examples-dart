@@ -1,7 +1,7 @@
 import 'package:bc_chat/src/model/channel.dart';
 import 'package:bc_chat/src/screens/login.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'localization/app_localizations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:braincloud/braincloud.dart';
 import 'package:braincloud_data_persistence/braincloud_data_persistence.dart';
@@ -20,9 +20,9 @@ class MyApp extends StatelessWidget {
 
   final SettingsController settingsController;
   final BrainCloudWrapper _bc = BrainCloudWrapper(persistence: DataPersistence());
-  final String appId = const String.fromEnvironment("APPID", defaultValue: "");
-  final String secretKey = const String.fromEnvironment("APPSECRET", defaultValue: "");
-  final String serverUrl = const String.fromEnvironment("SERVERURL", defaultValue: "");
+  final String appId = const String.fromEnvironment("appId", defaultValue: "");
+  final String secretKey = const String.fromEnvironment("secretKey", defaultValue: "");
+  final String serverUrl = const String.fromEnvironment("serverUrl", defaultValue: "");
 
   void initBc() {
     if (!_bc.isInitialized) {
