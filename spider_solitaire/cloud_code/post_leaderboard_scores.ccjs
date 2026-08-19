@@ -1,0 +1,77 @@
+// post_leaderboard_scores.ccjs
+//
+// Posts one or more scores to dynamic leaderboards in a single script
+// execution. Used by leaderboard_service.dart's postHighScore/postWin
+// so N direct client-side postScore calls collapse into one runScript
+// call — e.g. postWin's 3 leaderboard posts cost 1 script call + 0.5
+// per extra postScore beyond the first two, instead of 3 full API
+// counts.
+//
+// Portal setup required (one-time):
+//   1. Design > Cloud Code > Scripts > Upload post_leaderboard_scores.ccjs
+//        - clientCallable: true
+//        - s2sCallable:    false
+//        - scriptTimeout:  20
+//
+// Request (scriptData):
+//   {
+//     "scores": [
+//       {
+//         "leaderboardId": "spider_high_score_1suit",  // required
+//         "score": 4200,                                // required
+//         "leaderboardType": "HIGH_VALUE",              // required — SocialLeaderboardType.value
+//         "rotationType": "NEVER",                       // required — RotationType.value
+//         "retainedCount": 8,                            // required
+//         "rotationReset": 0,                            // optional, epoch ms UTC; ignored when rotationType == "NEVER"
+//         "data": { "time": 120, "moves": 55, "suits": 1, "completed": true }  // optional
+//       },
+//       ...
+//     ]
+//   }
+//
+// Response:
+//   { success: true|false, results: [ { leaderboardId, success, status?, reasonCode? }, ... ] }
+"use strict";
+
+function main() {
+    if (!data.scores || !Array.isArray(data.scores) || data.scores.length === 0) {
+        return { success: false, error: "Missing required parameter: scores (non-empty array)" };
+    }
+
+    let leaderboardService = bridge.getLeaderboardServiceProxy();
+    let results = [];
+    let allSucceeded = true;
+
+    for (let i = 0; i < data.scores.length; i++) {
+        let entry = data.scores[i];
+        let result = leaderboardService.postScoreToDynamicLeaderboardUTC(
+            entry.leaderboardId,
+            entry.score,
+            entry.data || {},
+            entry.leaderboardType,
+            entry.rotationType,
+            entry.rotationReset != null ? entry.rotationReset : 0,
+            entry.retainedCount
+        );
+
+        if (result.status == 200) {
+            results.push({ leaderboardId: entry.leaderboardId, success: true });
+        } else {
+            allSucceeded = false;
+            bridge.logErrorJson("postScoreToDynamicLeaderboardUTC failed", {
+                leaderboardId: entry.leaderboardId,
+                result: result
+            });
+            results.push({
+                leaderboardId: entry.leaderboardId,
+                success: false,
+                status: result.status,
+                reasonCode: result.reasonCode
+            });
+        }
+    }
+
+    return { success: allSucceeded, results: results };
+}
+
+main();
