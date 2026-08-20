@@ -32,6 +32,7 @@ class SpiderSolitaireApp extends StatelessWidget {
       title: 'Spider Solitaire',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
+        fontFamily: 'Roboto',
         colorScheme: ColorScheme.fromSeed(
           seedColor: const Color(0xFF0E5A2B),
           brightness: Brightness.dark,

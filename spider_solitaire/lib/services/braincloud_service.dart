@@ -156,37 +156,31 @@ class BrainCloudService {
     return _unwrap(response.data);
   }
 
-  /// Posts a score to the named leaderboard. `data` is an optional payload
-  /// (e.g. moves, time) that brainCloud stores alongside the entry.
+  /// Posts a batch of scores via the `post_leaderboard_scores` Cloud
+  /// Code script, so N leaderboard posts cost one `runScript` call
+  /// instead of N direct `postScoreToDynamicLeaderboardUTC` calls.
   ///
-  /// Uses `postScoreToDynamicLeaderboardUTC` so we can specify the
-  /// retention type per call. This is critical: brainCloud's default
-  /// leaderboard config keeps the *highest* score per player, which
-  /// silently drops every faster-time / fewer-move post on a
-  /// LOW_VALUE leaderboard. Passing the type at post time ensures any
-  /// freshly-created leaderboard is configured correctly. Existing
-  /// leaderboards keep whatever type they were created with, so if
-  /// they were misconfigured you must delete them in the portal first
-  /// (Design → Leaderboards → Leaderboard Configs).
-  Future<void> postScore({
-    required String leaderboardId,
-    required int score,
-    required SocialLeaderboardType leaderboardType,
-    Map<String, dynamic>? data,
-  }) async {
-    final response = await _bc.socialLeaderboardService
-        .postScoreToDynamicLeaderboardUTC(
-          leaderboardId: leaderboardId,
-          score: score,
-          data: data,
-          leaderboardType: leaderboardType,
-          rotationType: RotationType.NEVER,
-          retainedCount: 8,
-        );
-    _throwIfFailed(
-      response,
-      'postScoreToDynamicLeaderboardUTC($leaderboardId)',
+  /// Each entry must contain `leaderboardId`, `score`, `leaderboardType`,
+  /// `rotationType`, and `retainedCount` (all as the wire strings/values
+  /// brainCloud expects — see `SocialLeaderboardType`/`RotationType`
+  /// `.value`), plus an optional `data` payload.
+  ///
+  /// This is critical: brainCloud's default leaderboard config keeps the
+  /// *highest* score per player, which silently drops every
+  /// faster-time / fewer-move post on a LOW_VALUE leaderboard. Passing
+  /// the type at post time ensures any freshly-created leaderboard is
+  /// configured correctly. Existing leaderboards keep whatever type they
+  /// were created with, so if they were misconfigured you must delete
+  /// them in the portal first (Design → Leaderboards → Leaderboard
+  /// Configs).
+  Future<void> postScores(List<Map<String, dynamic>> scores) async {
+    final response = await runScript(
+      'post_leaderboard_scores',
+      scriptData: {'scores': scores},
     );
+    if (response['success'] != true) {
+      throw StateError('post_leaderboard_scores failed: $response');
+    }
   }
 
   /// Returns one page of entries from a global leaderboard.
@@ -196,7 +190,7 @@ class BrainCloudService {
   /// list with `[{playerId, playerName, score, data, rank, ...}, ...]`.
   ///
   /// A leaderboard only starts existing once someone posts the first score
-  /// to it (see `postScore`), so reading one nobody has played yet returns
+  /// to it (see `postScores`), so reading one nobody has played yet returns
   /// `noLeaderboardFound` rather than an empty page — treat that the same
   /// as "no entries" instead of surfacing it as an error.
   Future<Map<String, dynamic>> getLeaderboardPage({
