@@ -552,8 +552,8 @@ class MyGame extends FlameGame with TapDetector {
   // Amount to be won when Jackpot is collected.
   int currentJackpot = 0;
 
-  // Percent of bet that goes to the Jackpot. Both "POST" and "LOSS" contribute to this, but only "POST" counts as a loss for the Win Streak.
-  int jackpotCut = 0;
+  // Fraction of bet that goes to the Jackpot (e.g. 0.1 for 10%). Both "POST" and "LOSS" contribute to this, but only "POST" counts as a loss for the Win Streak.
+  double jackpotCut = 0;
 
   // Number of wins in a row required to collect the Jackpot. Both "POST" and "WIN" contribute to the streak.
   int streakToWinJackpot = 0;
@@ -672,8 +672,12 @@ class MyGame extends FlameGame with TapDetector {
         hud.quickBetMax = int.parse(response.data?["QuickBetMax"]["value"]);
 
         bet = hud.quickBet1;
+      } catch (e) {
+        debugPrint("$e");
+      }
 
-        jackpotCut = int.parse(response.data?["JackpotCut"]["value"]);
+      try {
+        jackpotCut = double.parse(response.data?["JackpotCut"]["value"]);
       } catch (e) {
         debugPrint("$e");
       }
