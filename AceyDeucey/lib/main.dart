@@ -143,20 +143,59 @@ class _MyAppState extends State<MyApp> {
   }
 }
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   const HomePage({super.key});
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  static const double designHeight = 950;
+
+  // Created once and reused across every rebuild (LayoutBuilder's builder
+  // re-runs on every resize, and re-running `MyGame()` there would spin up a
+  // fresh FlameGame mid-resize, positioned for a stale size while the
+  // overlays already reflect the current one).
+  final MyGame _game = MyGame();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        body: GameWidget(
-      game: MyGame(),
-      overlayBuilderMap: {
-        "Toolbar": (context, game) => _buildToolbar(context, game as MyGame),
-        "Grid": (context, game) => _buildGrid(context, game as MyGame),
-      },
-      initialActiveOverlays: const ["Toolbar", "Grid"],
-    ));
+      backgroundColor: Colors.white,
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final double scale = constraints.maxHeight <= 0
+              ? 1.0
+              : (constraints.maxHeight / designHeight).clamp(0.05, 1.0);
+          return OverflowBox(
+            alignment: Alignment.topCenter,
+            minWidth: 0,
+            maxWidth: double.infinity,
+            minHeight: 0,
+            maxHeight: double.infinity,
+            child: Transform.scale(
+              scale: scale,
+              alignment: Alignment.topCenter,
+              child: SizedBox(
+                width: constraints.maxWidth / scale,
+                height: designHeight,
+                child: GameWidget(
+                  game: _game,
+                  overlayBuilderMap: {
+                    "Toolbar": (context, game) =>
+                        _buildToolbar(context, game as MyGame),
+                    "Grid": (context, game) =>
+                        _buildGrid(context, game as MyGame),
+                  },
+                  initialActiveOverlays: const ["Toolbar", "Grid"],
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
   }
 }
 
@@ -279,7 +318,7 @@ Widget _buildGrid(BuildContext context, MyGame game) {
                               style: labelStyle))),
                 ],
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 4),
               Row(
                 children: [
                   Expanded(
@@ -319,7 +358,7 @@ Widget _buildGrid(BuildContext context, MyGame game) {
                   ),
                 ],
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 2),
               Text("brainCloud Client Version: ${hud.clientVersion}",
                   style: const TextStyle(fontSize: 11, color: Colors.grey)),
             ],
@@ -355,74 +394,87 @@ class _SignInPageState extends State<SignInPage> {
       ),
       body: Form(
         key: _formKey,
-        child: Center(
-          child: Container(
-            constraints: const BoxConstraints(minWidth: 100, maxWidth: 400),
-            padding: const EdgeInsets.all(12),
-            child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  const Text("Acey Deucey",
-                      style: TextStyle(
-                          fontSize: 30,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.indigo)),
-                  Container(height: 24),
-                  TextFormField(
-                    controller: universalIdController,
-                    decoration: const InputDecoration(
-                        border: OutlineInputBorder(),
-                        labelText: "Universal ID"),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter your Universal ID';
-                      }
-                      return null;
-                    },
-                  ),
-                  Container(height: 12),
-                  TextFormField(
-                    controller: passwordController,
-                    decoration: const InputDecoration(
-                        border: OutlineInputBorder(), labelText: "Password"),
-                    obscureText: true,
-                    onFieldSubmitted: (_) => signIn(context),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter your password';
-                      }
-                      return null;
-                    },
-                  ),
-                  Container(height: 12),
-                  const Text(
-                      "If there is no account tied to the given Universal ID, a new one will be auto-created using the password you enter.",
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                          color: Colors.grey, fontStyle: FontStyle.italic)),
-                  Container(height: 12),
-                  signingIn
-                      ? const CircularProgressIndicator()
-                      : ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.indigo,
-                            foregroundColor: Colors.white,
-                            minimumSize: const Size(double.infinity, 50),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: Center(
+                  child: Container(
+                    constraints:
+                        const BoxConstraints(minWidth: 100, maxWidth: 400),
+                    padding: const EdgeInsets.all(12),
+                    child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          const Text("Acey Deucey",
+                              style: TextStyle(
+                                  fontSize: 30,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.indigo)),
+                          Container(height: 24),
+                          TextFormField(
+                            controller: universalIdController,
+                            decoration: const InputDecoration(
+                                border: OutlineInputBorder(),
+                                labelText: "Universal ID"),
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Please enter your Universal ID';
+                              }
+                              return null;
+                            },
                           ),
-                          onPressed: () => signIn(context),
-                          child: const Text("Login")),
-                  Container(height: 12),
-                  ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red,
-                        foregroundColor: Colors.white,
-                        minimumSize: const Size(double.infinity, 50),
-                      ),
-                      onPressed: () => {},
-                      child: const Text("Forgot Password")),
-                ]),
-          ),
+                          Container(height: 12),
+                          TextFormField(
+                            controller: passwordController,
+                            decoration: const InputDecoration(
+                                border: OutlineInputBorder(),
+                                labelText: "Password"),
+                            obscureText: true,
+                            onFieldSubmitted: (_) => signIn(context),
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Please enter your password';
+                              }
+                              return null;
+                            },
+                          ),
+                          Container(height: 12),
+                          const Text(
+                              "If there is no account tied to the given Universal ID, a new one will be auto-created using the password you enter.",
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                  color: Colors.grey,
+                                  fontStyle: FontStyle.italic)),
+                          Container(height: 12),
+                          signingIn
+                              ? const CircularProgressIndicator()
+                              : ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.indigo,
+                                    foregroundColor: Colors.white,
+                                    minimumSize:
+                                        const Size(double.infinity, 50),
+                                  ),
+                                  onPressed: () => signIn(context),
+                                  child: const Text("Login")),
+                          Container(height: 12),
+                          ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.red,
+                                foregroundColor: Colors.white,
+                                minimumSize: const Size(double.infinity, 50),
+                              ),
+                              onPressed: () => {},
+                              child: const Text("Forgot Password")),
+                        ]),
+                  ),
+                ),
+              ),
+            );
+          },
         ),
       ),
     );
@@ -467,7 +519,7 @@ class _SignInPageState extends State<SignInPage> {
 
 class MyGame extends FlameGame with TapDetector {
   static const double topBarHeight = 64;
-  static const double bottomPanelHeight = 210;
+  static const double bottomPanelHeight = 180;
 
   CardComponent card1 = CardComponent();
   CardComponent card2 = CardComponent();
@@ -540,6 +592,46 @@ class MyGame extends FlameGame with TapDetector {
   @override
   Color backgroundColor() => Color(0xFFFFFFFF);
 
+  /// Positions the board's components from the current canvas [size].
+  /// Called once from [onLoad] and again from [onGameResize] since width
+  /// tracks the real window (see [_HomePageState.build]) and can change
+  /// after load, while height is fixed at design time.
+  void _layoutComponents() {
+    final double bandTop = topBarHeight + 20;
+    final double cardsRowY = bandTop + 70;
+
+    card1
+      ..x = (size[0] / 2) - 180
+      ..y = cardsRowY;
+
+    card2
+      ..x = (size[0] / 2) + 20
+      ..y = cardsRowY;
+
+    card3
+      ..x = (size[0] / 2) - 80
+      ..y = cardsRowY + 200;
+
+    jackpotText
+      ..x = size[0] - padding
+      ..y = bandTop;
+
+    jackpotStreakText
+      ..x = size[0] - padding
+      ..y = bandTop + 36;
+
+    mainButton.position = Vector2((size[0] / 2) - 40, cardsRowY + 420);
+    stateLabelText.position = Vector2(size[0] / 2, cardsRowY + 508);
+  }
+
+  @override
+  void onGameResize(Vector2 size) {
+    super.onGameResize(size);
+    if (isLoaded) {
+      _layoutComponents();
+    }
+  }
+
   @override
   FutureOr<void> onLoad() async {
     for (String suit in suits) {
@@ -548,37 +640,16 @@ class MyGame extends FlameGame with TapDetector {
       }
     }
 
-    final double bandTop = topBarHeight + 20;
-    final double cardsRowY = bandTop + 70;
-
-    card1
-      ..x = (size[0] / 2) - 180
-      ..y = cardsRowY;
+    _layoutComponents();
 
     await add(card1);
-
-    card2
-      ..x = (size[0] / 2) + 20
-      ..y = cardsRowY;
-
     await add(card2);
-
-    card3
-      ..x = (size[0] / 2) - 80
-      ..y = cardsRowY + 200;
-
     await add(card3);
 
-    jackpotText
-      ..x = size[0] - padding
-      ..y = bandTop
-      ..textRenderer = jackpotTextStyle;
+    jackpotText.textRenderer = jackpotTextStyle;
     add(jackpotText);
 
-    jackpotStreakText
-      ..x = size[0] - padding
-      ..y = bandTop + 36
-      ..textRenderer = jackpotStreakTextStyle;
+    jackpotStreakText.textRenderer = jackpotStreakTextStyle;
     add(jackpotStreakText);
 
     newHand();
@@ -631,13 +702,11 @@ class MyGame extends FlameGame with TapDetector {
     }
 
     mainButton.onPressed = () => deal();
-    mainButton.position = Vector2((size[0] / 2) - 40, cardsRowY + 420);
     add(mainButton);
 
     stateLabelText
       ..textRenderer = stateLabelTextStyle
-      ..text = "Flip"
-      ..position = Vector2(size[0] / 2, cardsRowY + 508);
+      ..text = "Flip";
     add(stateLabelText);
 
     await super.onLoad();
