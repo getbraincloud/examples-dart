@@ -46,7 +46,7 @@ This sample also reads game-balance settings via `globalAppService.readPropertie
 | `JackpotDefaultValue` | Value the jackpot resets to once a player collects it |
 | `StreakToWinJackpot` | Consecutive wins (a "post" or a win both count) needed to collect the jackpot |
 
-Pick whatever numeric values suit your desired game balance — just make sure each is set to a plain integer value, since the app parses them with `int.parse`.
+Pick whatever numeric values suit your desired game balance — just make sure each is set to a plain integer value, since the app parses them with `int.parse`, **except `JackpotCut`, which is a fraction (e.g. `0.1` for 10%) parsed with `double.parse`.**
 
 ### Adding the global statistics
 
