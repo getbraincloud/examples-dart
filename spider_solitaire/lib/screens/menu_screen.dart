@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/difficulty.dart';
 import '../services/braincloud_service.dart';
+import '../services/game_center_service.dart';
 import '../services/leaderboard_service.dart';
 import '../services/scoring_service.dart';
 import '../services/stats_service.dart';
@@ -35,14 +36,21 @@ class MenuScreen extends StatefulWidget {
 class _MenuScreenState extends State<MenuScreen> {
   static const _prefsNameKey = 'playerDisplayName';
 
+  final _gameCenter = GameCenterAuthService();
+
   Difficulty _difficulty = Difficulty.oneSuit;
   String? _playerName;
   bool _initialPromptShown = false;
+  bool _gameCenterBusy = false;
+  bool _gameCenterAvailable = false;
 
   @override
   void initState() {
     super.initState();
     _loadName();
+    _gameCenter.isAvailable().then((available) {
+      if (mounted) setState(() => _gameCenterAvailable = available);
+    });
   }
 
   Future<void> _loadName() async {
@@ -248,6 +256,25 @@ class _MenuScreenState extends State<MenuScreen> {
 
   bool get _hasName => _playerName != null && _playerName!.isNotEmpty;
 
+  Future<void> _signInWithGameCenter() async {
+    if (_gameCenterBusy) return;
+    setState(() => _gameCenterBusy = true);
+    try {
+      await widget.bc.linkGameCenter(await _gameCenter.signIn());
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Game Center linked.')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Game Center sign-in failed: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _gameCenterBusy = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     // Phone landscape gives us ~360–420 px of vertical space; tablets get
@@ -310,6 +337,40 @@ class _MenuScreenState extends State<MenuScreen> {
                           ],
                         ),
                       ),
+                      if (_gameCenterAvailable) ...[
+                        SizedBox(height: pickerGap),
+                        TextButton.icon(
+                          onPressed: widget.bc.isGameCenterLinked ||
+                                  _gameCenterBusy
+                              ? null
+                              : _signInWithGameCenter,
+                          icon: _gameCenterBusy
+                              ? const SizedBox(
+                                  width: 14,
+                                  height: 14,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white70,
+                                  ),
+                                )
+                              : Icon(
+                                  widget.bc.isGameCenterLinked
+                                      ? Icons.check_circle
+                                      : Icons.games,
+                                  size: 16,
+                                  color: Colors.white70,
+                                ),
+                          label: Text(
+                            widget.bc.isGameCenterLinked
+                                ? 'Game Center linked'
+                                : 'Link Game Center',
+                            style: const TextStyle(
+                              color: Colors.white70,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                      ],
                       SizedBox(height: sectionGap),
                       Text(
                         'Difficulty',

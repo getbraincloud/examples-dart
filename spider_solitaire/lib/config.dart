@@ -1,11 +1,9 @@
 /// brainCloud configuration.
 ///
-/// Replace these placeholders with the App ID and Server Secret from the
-/// brainCloud Design Portal (Application IDs page).
+/// Values come from bc_config.json (`dart run braincloud:setup`) via
+/// --dart-define-from-file; init() reads the app settings.
 class BrainCloudConfig {
   static const String serverUrl = String.fromEnvironment('serverUrl');
-  static const String appId = String.fromEnvironment('appId');
-  static const String serverSecret = String.fromEnvironment('secretKey');
   static const String appVersion = String.fromEnvironment('version');
   static const String wrapperName = 'spider_solitaire_wrapper';
 }

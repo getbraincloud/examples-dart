@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'config.dart';
 import 'screens/menu_screen.dart';
 import 'services/braincloud_service.dart';
+import 'services/game_center_service.dart';
 import 'services/leaderboard_service.dart';
 import 'services/scoring_service.dart';
 import 'services/stats_service.dart';
@@ -78,14 +79,12 @@ class _BootstrapperState extends State<_Bootstrapper> {
   Future<_AppHandle> _init() async {
     final bc = BrainCloudService(
       serverUrl: BrainCloudConfig.serverUrl,
-      appId: BrainCloudConfig.appId,
-      serverSecret: BrainCloudConfig.serverSecret,
       appVersion: BrainCloudConfig.appVersion,
       wrapperName: BrainCloudConfig.wrapperName,
     );
     await bc.init();
     if (!bc.isAuthenticated) {
-      await bc.authenticateAnonymous();
+      await _authenticate(bc);
     }
     // Load the scoring globalProperties before the menu lands so the
     // first game uses the live values. ScoringService swallows errors
@@ -100,6 +99,25 @@ class _BootstrapperState extends State<_Bootstrapper> {
       UsernameService(bc),
       scoring,
     );
+  }
+
+  // Players who opted into Game Center sign back in with it, since a profile
+  // switch leaves the stored anonymous id pointing at the old profile.
+  Future<void> _authenticate(BrainCloudService bc) async {
+    final gameCenter = GameCenterAuthService();
+    final gameCenterAvailable = await gameCenter.isAvailable();
+    if (gameCenterAvailable && await bc.prefersGameCenter) {
+      try {
+        await bc.authenticateGameCenter(await gameCenter.signIn());
+        return;
+      } catch (_) {
+        await bc.clearGameCenterPreference();
+        await bc.authenticateAnonymous(freshOnFailure: true);
+        return;
+      }
+    }
+    await bc.authenticateAnonymous();
+    if (gameCenterAvailable) await bc.refreshGameCenterLinked();
   }
 
   @override

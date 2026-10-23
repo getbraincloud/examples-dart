@@ -20,14 +20,17 @@ class MyApp extends StatelessWidget {
 
   final SettingsController settingsController;
   final BrainCloudWrapper _bc = BrainCloudWrapper(persistence: DataPersistence());
-  final String appId = const String.fromEnvironment("appId", defaultValue: "");
-  final String secretKey = const String.fromEnvironment("secretKey", defaultValue: "");
   final String serverUrl = const String.fromEnvironment("serverUrl", defaultValue: "");
 
+  // init is async; build() can run again before it finishes.
+  static bool _initStarted = false;
+
+
   void initBc() {
-    if (!_bc.isInitialized) {
-      debugPrint("Will init with app id $appId at $serverUrl");
-      _bc.init(secretKey: secretKey, appId: appId, version: "1.0.0", updateTick: 50, url: serverUrl);
+    if (!_initStarted && !_bc.isInitialized) {
+      _initStarted = true;
+      debugPrint("Will init at $serverUrl");
+      _bc.init(updateTick: 50);
     }
   }
 
