@@ -4,6 +4,8 @@ import 'package:braincloud/braincloud.dart';
 import 'package:braincloud/data_persistence.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'game_center_service.dart';
+
 class _SharedPrefsPersistence implements DataPersistenceBase {
   @override
   Future<void> setString(String key, String value) async {
@@ -22,9 +24,7 @@ class _SharedPrefsPersistence implements DataPersistenceBase {
 class BrainCloudService {
   BrainCloudService({
     required this.serverUrl,
-    required this.appId,
     required this.appVersion,
-    required this.serverSecret,
     String wrapperName = 'spider_solitaire_wrapper',
     BrainCloudWrapper? wrapper,
   }) : _bc =
@@ -35,9 +35,7 @@ class BrainCloudService {
            );
 
   final String serverUrl;
-  final String appId;
   final String appVersion;
-  final String serverSecret;
   final BrainCloudWrapper _bc;
 
   BrainCloudWrapper get wrapper => _bc;
@@ -48,19 +46,17 @@ class BrainCloudService {
   String get sdkVersion => _bc.brainCloudClient.brainCloudClientVersion;
 
   Future<void> init() async {
-    await _bc.init(
-      secretKey: serverSecret,
-      appId: appId,
-      version: appVersion,
-      url: serverUrl,
-      updateTick: 50,
-    );
+    // Reads bc_config.json, baked in by --dart-define-from-file.
+    await _bc.init(updateTick: 50);
     _bc.enableAutoReconnect(true);
   }
 
-  Future<void> authenticateAnonymous() async {
+  /// [freshOnFailure] starts a new anonymous profile on any failure, for when
+  /// the stored ids may belong to a profile we switched away from.
+  Future<void> authenticateAnonymous({bool freshOnFailure = false}) async {
     var response = await _bc.authenticateAnonymous();
-    if (!response.isSuccess() && response.reasonCode == 40206) {
+    if (!response.isSuccess() &&
+        (freshOnFailure || response.reasonCode == 40206)) {
       // Stale profile stored locally no longer exists on the server.
       // Reset and create a fresh anonymous profile.
       _bc.resetStoredProfileId();
@@ -73,6 +69,77 @@ class BrainCloudService {
         '${response.statusCode} (${response.reasonCode}): ${response.error}',
       );
     }
+  }
+
+  static const _prefsGameCenterKey = 'useGameCenter';
+
+  bool _gameCenterLinked = false;
+
+  /// Whether this session is signed in with, or linked to, Game Center.
+  bool get isGameCenterLinked => _gameCenterLinked;
+
+  /// Whether the player opted into Game Center on a previous launch.
+  Future<bool> get prefersGameCenter async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_prefsGameCenterKey) ?? false;
+  }
+
+  /// Picks up a Game Center identity attached on an earlier launch.
+  Future<void> refreshGameCenterLinked() async {
+    final response = await _bc.identityService.getIdentities();
+    if (!response.isSuccess()) return;
+    final identities = _unwrap(response.data)['identities'];
+    _gameCenterLinked = identities is Map &&
+        identities.containsKey(AuthenticationType.gameCenter.value);
+  }
+
+  Future<void> clearGameCenterPreference() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_prefsGameCenterKey);
+  }
+
+  /// Attaches Game Center to the current profile so the player keeps their
+  /// stats. Switches profiles only if this Game Center player is already
+  /// used elsewhere.
+  Future<void> linkGameCenter(GameCenterSignature identity) async {
+    final response = await _bc.identityService.attachGameCenterIdentity(
+      gameCenterId: identity.gameCenterId,
+      timestamp: identity.timestamp,
+      publicKeyUrl: identity.publicKeyUrl,
+      signature: identity.signature,
+      salt: identity.salt,
+    );
+    if (response.isSuccess()) {
+      await _setGameCenterLinked();
+      return;
+    }
+    // mergeProfiles: another profile owns it. duplicateIdentityType: this
+    // profile has a different Game Center player.
+    if (response.reasonCode == ReasonCodes.mergeProfiles ||
+        response.reasonCode == ReasonCodes.duplicateIdentityType) {
+      await authenticateGameCenter(identity);
+      return;
+    }
+    _throwIfFailed(response, 'attachGameCenterIdentity');
+  }
+
+  Future<void> authenticateGameCenter(GameCenterSignature identity) async {
+    final response = await _bc.authenticateGameCenter(
+      gameCenterId: identity.gameCenterId,
+      forceCreate: true,
+      timestamp: identity.timestamp,
+      publicKeyUrl: identity.publicKeyUrl,
+      signature: identity.signature,
+      salt: identity.salt,
+    );
+    _throwIfFailed(response, 'authenticateGameCenter');
+    await _setGameCenterLinked();
+  }
+
+  Future<void> _setGameCenterLinked() async {
+    _gameCenterLinked = true;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_prefsGameCenterKey, true);
   }
 
   /// Increment user statistics. brainCloud will create the stat row if a

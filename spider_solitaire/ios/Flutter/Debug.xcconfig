@@ -1,2 +1,6 @@
 #include? "Pods/Target Support Files/Pods-Runner/Pods-Runner.debug.xcconfig"
 #include "Generated.xcconfig"
+
+APP_BUNDLE_ID = com.bitheadsinc.spiderSolitaire
+// Optional gitignored overrides (bundle id / team) for testing Game Center with your own app.
+#include? "Local.xcconfig"

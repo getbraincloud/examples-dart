@@ -8,7 +8,13 @@
 PRODUCT_NAME = spider_solitaire
 
 // The application's bundle identifier
-PRODUCT_BUNDLE_IDENTIFIER = com.bitheadsinc.spiderSolitaire
+APP_BUNDLE_ID = com.bitheadsinc.spiderSolitaire
+PRODUCT_BUNDLE_IDENTIFIER = $(APP_BUNDLE_ID)
 
 // The copyright displayed in application information
 PRODUCT_COPYRIGHT = Copyright © 2026 com.bitheadsinc. All rights reserved.
+
+// Game Center needs a provisioned signature, so its entitlement is opt-in via Local.xcconfig.
+APP_ENTITLEMENTS_DEBUG = Runner/DebugProfile.entitlements
+APP_ENTITLEMENTS_RELEASE = Runner/Release.entitlements
+#include? "../../Flutter/Local.xcconfig"

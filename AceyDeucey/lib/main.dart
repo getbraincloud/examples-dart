@@ -69,34 +69,9 @@ class _MyAppState extends State<MyApp> {
 
   /// Future to init the BrainCloud Client
   Future<String> _initAndUpdateRoute() async {
-    const secretKey = String.fromEnvironment('secretKey');
-    if (secretKey.isEmpty) {
-      throw AssertionError(
-          'secretKey is not set. Create a bc_config.json and run with --dart-define-from-file=bc_config.json');
-    }
+    await _bcWrapper.init(updateTick: 50);
 
-    const appId = String.fromEnvironment('appId');
-    if (appId.isEmpty) {
-      throw AssertionError(
-          'appId is not set. Create a bc_config.json and run with --dart-define-from-file=bc_config.json');
-    }
-
-    const version = String.fromEnvironment('version');
-    if (version.isEmpty) {
-      throw AssertionError(
-          'version is not set. Create a bc_config.json and run with --dart-define-from-file=bc_config.json');
-    }
-
-    const url = String.fromEnvironment('serverUrl');
-
-    channelId = "$appId:gl:jackpot";
-
-    await _bcWrapper.init(
-        secretKey: secretKey,
-        appId: appId,
-        version: version,
-        url: url.isNotEmpty ? url : null,
-        updateTick: 50);
+    channelId = "${_bcWrapper.brainCloudClient.appId}:gl:jackpot";
 
     /// Check if there was a session and, if so, resume it.
     bool hadSession = _bcWrapper.canReconnect();
