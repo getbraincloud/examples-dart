@@ -47,3 +47,10 @@ bc_chat/.vscode/launch.json
 AceyDeucey/build
 bc_cli/config.json
 AceyDeucey/config.json
+
+# Local SDK path overrides written by `node bccm syncsdk` -- never commit
+pubspec_overrides.yaml
+
+# Local iOS/macOS signing overrides (see spider_solitaire/*/Flutter/Local.xcconfig.example)
+**/ios/Flutter/Local.xcconfig
+**/macos/Flutter/Local.xcconfig

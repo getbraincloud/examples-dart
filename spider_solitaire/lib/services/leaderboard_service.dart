@@ -64,6 +64,26 @@ class LeaderboardService {
 
   final BrainCloudService _bc;
 
+  static const int _retainedCount = 8;
+
+  /// Builds one entry of the `post_leaderboard_scores` Cloud Code
+  /// script's `scores` array for [metric]/[difficulty].
+  Map<String, dynamic> _scoreEntry({
+    required LeaderboardMetric metric,
+    required Difficulty difficulty,
+    required int score,
+    required Map<String, dynamic> payload,
+  }) {
+    return {
+      'leaderboardId': metric.leaderboardId(difficulty),
+      'score': score,
+      'leaderboardType': metric.leaderboardType.value,
+      'rotationType': RotationType.NEVER.value,
+      'retainedCount': _retainedCount,
+      'data': payload,
+    };
+  }
+
   /// Posts a high score (only) to the high-score leaderboard for
   /// [difficulty]. Used when the player abandons or gets stuck — the
   /// fastest-time / fewest-moves boards only make sense for completed
@@ -85,17 +105,20 @@ class LeaderboardService {
       if (playerName != null && playerName.isNotEmpty)
         'playerName': playerName,
     };
-    await _bc.postScore(
-      leaderboardId: LeaderboardIds.highScore(difficulty.suitCount),
-      score: score,
-      leaderboardType: LeaderboardMetric.highScore.leaderboardType,
-      data: payload,
-    );
+    await _bc.postScores([
+      _scoreEntry(
+        metric: LeaderboardMetric.highScore,
+        difficulty: difficulty,
+        score: score,
+        payload: payload,
+      ),
+    ]);
   }
 
-  /// Posts a winning game to the three leaderboards for that difficulty.
-  /// Time and move counts are submitted directly because brainCloud's
-  /// LOW_TO_HIGH sort treats lower numbers as better.
+  /// Posts a winning game to the three leaderboards for that difficulty,
+  /// in a single `post_leaderboard_scores` Cloud Code call. Time and
+  /// move counts are submitted directly because brainCloud's LOW_TO_HIGH
+  /// sort treats lower numbers as better.
   ///
   /// [playerName] is embedded in the score data so the leaderboard view
   /// can always display a name even if the player's profile name isn't
@@ -116,24 +139,24 @@ class LeaderboardService {
       if (playerName != null && playerName.isNotEmpty)
         'playerName': playerName,
     };
-    await Future.wait([
-      _bc.postScore(
-        leaderboardId: LeaderboardIds.highScore(difficulty.suitCount),
+    await _bc.postScores([
+      _scoreEntry(
+        metric: LeaderboardMetric.highScore,
+        difficulty: difficulty,
         score: score,
-        leaderboardType: LeaderboardMetric.highScore.leaderboardType,
-        data: payload,
+        payload: payload,
       ),
-      _bc.postScore(
-        leaderboardId: LeaderboardIds.fastestTime(difficulty.suitCount),
+      _scoreEntry(
+        metric: LeaderboardMetric.fastestTime,
+        difficulty: difficulty,
         score: elapsedSeconds,
-        leaderboardType: LeaderboardMetric.fastestTime.leaderboardType,
-        data: payload,
+        payload: payload,
       ),
-      _bc.postScore(
-        leaderboardId: LeaderboardIds.fewestMoves(difficulty.suitCount),
+      _scoreEntry(
+        metric: LeaderboardMetric.fewestMoves,
+        difficulty: difficulty,
         score: moves,
-        leaderboardType: LeaderboardMetric.fewestMoves.leaderboardType,
-        data: payload,
+        payload: payload,
       ),
     ]);
   }

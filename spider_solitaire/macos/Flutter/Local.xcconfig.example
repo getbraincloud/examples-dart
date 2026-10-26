@@ -1,0 +1,7 @@
+// Copy to Local.xcconfig (gitignored) to enable Game Center with your own App Store Connect app.
+// The app needs a macOS platform with Game Center on, and the bundle id set in the brainCloud app's Apple platform settings.
+APP_BUNDLE_ID = com.yourcompany.yourgame
+DEVELOPMENT_TEAM = ABCDE12345
+CODE_SIGN_IDENTITY = Apple Development
+APP_ENTITLEMENTS_DEBUG = Runner/DebugProfile-GameCenter.entitlements
+APP_ENTITLEMENTS_RELEASE = Runner/Release-GameCenter.entitlements

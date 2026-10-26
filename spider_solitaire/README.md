@@ -6,6 +6,7 @@ Spider Solitaire built with Flutter + Flame, backed by brainCloud for anonymous 
 
 See the [repository README](../README.md) for installing Flutter and creating a brainCloud app. This sample additionally needs:
 * The `claim_username` cloud code script uploaded to your app — see the header comment in [`cloud_code/claim_username.ccjs`](cloud_code/claim_username.ccjs) for the one-time portal setup (Design > Cloud Code > Scripts), including making player display names searchable.
+* The `post_leaderboard_scores` cloud code script uploaded to your app — see the header comment in [`cloud_code/post_leaderboard_scores.ccjs`](cloud_code/post_leaderboard_scores.ccjs) for the one-time portal setup (Design > Cloud Code > Scripts). This batches the high-score/fastest-time/fewest-moves leaderboard posts into a single `runScript` call instead of one direct API call per leaderboard.
 * The user statistics below, defined in the portal before the app can read or increment them.
 
 ### Adding the user statistics
