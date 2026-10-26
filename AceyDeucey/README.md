@@ -75,14 +75,9 @@ Betting is settled server-side by two cloud code scripts that award/consume a `b
 flutter pub get
 ```
 
-2. Create a `bc_config.json` file in this folder, pointing at your own brainCloud app:
-```json
-{
-    "serverUrl": "https://api.braincloudservers.com/dispatcherv2",
-    "secretKey": "<app secret from brainCloud portal>",
-    "appId": "<app id from brainCloud portal>",
-    "version": "1.0.0"
-}
+2. Run the brainCloud setup tool, log in, and pick (or create) your app. It writes `bc_config.json` to this folder:
+```shell
+dart run braincloud:setup
 ```
 
 3. Run the app:

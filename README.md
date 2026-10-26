@@ -4,21 +4,20 @@ This repository contains example Flutter projects that use the [brainCloud Dart 
 
 ## Prerequisites
 
-- [Flutter SDK](https://docs.flutter.dev/get-started/install) (each sample's `pubspec.yaml` lists its minimum Dart SDK under `environment: sdk:`)
-- A brainCloud app — sign up and create one at the [brainCloud portal](https://portal.braincloudservers.com/). You'll need the app's **App ID** and **App Secret** (Design > Core App Info).
+- [Flutter SDK](https://docs.flutter.dev/get-started/install) 3.38 or later (Dart 3.10), required by the brainCloud 6.1 client
+- A brainCloud account — sign up at the [brainCloud portal](https://portal.braincloudservers.com/). You can pick or create an app during setup.
 
 ## Configuring a sample
 
-None of these samples ship with real credentials. Each one reads its connection info from a `bc_config.json` file that you create in the sample's root folder (it's gitignored, so your credentials won't be committed):
+None of these samples ship with credentials. Each one reads its connection info from a `bc_config.json` in the sample's root folder, written by the brainCloud setup tool:
 
-```json
-{
-    "serverUrl": "https://api.braincloudservers.com/dispatcherv2",
-    "secretKey": "<app secret from brainCloud portal>",
-    "appId": "<app id from brainCloud portal>",
-    "version": "1.0.0"
-}
+```shell
+cd <SampleName>
+flutter pub get
+dart run braincloud:setup
 ```
+
+This opens the brainCloud setup page in your browser. Log in, pick (or create) your app, and it writes `bc_config.json` and adds it to `.gitignore`. The samples then call `init()` with no parameters, which reads the config passed with `--dart-define-from-file`.
 
 Point every sample at its own brainCloud app — don't reuse one app across samples.
 
@@ -33,8 +32,6 @@ Point every sample at its own brainCloud app — don't reuse one app across samp
 ## Running a sample
 
 ```shell
-cd <SampleName>
-flutter pub get
 flutter run --dart-define-from-file=bc_config.json
 ```
 
