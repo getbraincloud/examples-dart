@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import 'braincloud_tuning.dart';
 import 'config.dart';
 import 'screens/menu_screen.dart';
 import 'services/braincloud_service.dart';
@@ -11,6 +12,7 @@ import 'services/stats_service.dart';
 import 'services/username_service.dart';
 
 void main() {
+  braincloudBootstrap();
   WidgetsFlutterBinding.ensureInitialized();
   // Lock to landscape: the 10-column tableau + the top-bar layout don't
   // fit in phone portrait (the bar's Row overflows horizontally and gets

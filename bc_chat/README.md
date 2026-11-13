@@ -22,7 +22,7 @@ See the [repository README](../README.md) for installing Flutter and creating a 
 flutter pub get
 ```
 
-2. Run the brainCloud setup tool, log in, and pick (or create) your app. It writes `bc_config.json` to this folder:
+2. Run the brainCloud setup tool, log in, and pick (or create) your app. It writes `bc_config.json` and `lib/braincloud_tuning.dart` (imported by `main.dart`) to this folder:
 ```shell
 dart run braincloud:setup
 ```

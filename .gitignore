@@ -54,3 +54,11 @@ pubspec_overrides.yaml
 # Local iOS/macOS signing overrides (see spider_solitaire/*/Flutter/Local.xcconfig.example)
 **/ios/Flutter/Local.xcconfig
 **/macos/Flutter/Local.xcconfig
+
+# brainCloud app config (generated)
+/AceyDeucey/bc_config.json
+/AceyDeucey/lib/braincloud_tuning.dart
+/bc_chat/bc_config.json
+/bc_chat/lib/braincloud_tuning.dart
+/spider_solitaire/bc_config.json
+/spider_solitaire/lib/braincloud_tuning.dart

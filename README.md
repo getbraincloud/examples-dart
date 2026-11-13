@@ -17,7 +17,7 @@ flutter pub get
 dart run braincloud:setup
 ```
 
-This opens the brainCloud setup page in your browser. Log in, pick (or create) your app, and it writes `bc_config.json` and adds it to `.gitignore`. The samples then call `init()` with no parameters, which reads the config passed with `--dart-define-from-file`.
+This opens the brainCloud setup page in your browser. Log in, pick (or create) your app, and it writes `bc_config.json` plus `lib/braincloud_tuning.dart`, and adds both to `.gitignore`. Each sample calls `braincloudBootstrap()` (from that file) in `main()`, then `init()` with no parameters, which reads the config passed with `--dart-define-from-file`.
 
 Point every sample at its own brainCloud app — don't reuse one app across samples.
 

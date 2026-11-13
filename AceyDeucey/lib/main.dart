@@ -9,6 +9,7 @@ import 'package:flame/input.dart';
 import 'package:flame/palette.dart';
 import 'package:flutter/material.dart';
 import 'package:sample_app/game_button.dart';
+import 'braincloud_tuning.dart';
 import 'card_component.dart';
 import 'game_hud.dart';
 import 'leaderboard_page.dart';
@@ -29,7 +30,10 @@ const routeSignIn = '/signIn';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
-void main() => runApp(const MyApp());
+void main() {
+  braincloudBootstrap();
+  runApp(const MyApp());
+}
 
 /// Records the results of a successful authentication/reconnect: stores the
 /// profile id, and resolves the display name (falling back to the Universal
